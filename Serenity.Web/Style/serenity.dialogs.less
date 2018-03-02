@@ -154,7 +154,7 @@ div.s-Toolbar .s-PopupToolButton .button-outer > span > b {
 }
 
 .flex-layout {
-    .s-Form .editor {
+    .s-Form .editor, .s-Form .widget-wrapper {
         float: initial;
     }
 
@@ -178,10 +178,14 @@ div.s-Toolbar .s-PopupToolButton .button-outer > span > b {
         .flex(0, 0, auto);
     }
 
-    .editor {
+    .editor, .widget-wrapper {
         float: initial;
         .flex(1, 1, 80%);
         min-width: 0;
+    }
+
+    .widget-wrapper {
+        .display(flex);
     }
 
     input.editor[type=checkbox] {

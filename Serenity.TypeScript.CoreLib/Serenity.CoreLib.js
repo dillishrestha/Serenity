@@ -8,12 +8,37 @@
                 r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __skipExtends = {
+    "__metadata": true,
+    "__typeName": true,
+    "__componentFactory": true
+};
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b)
-        if (b.hasOwnProperty(p) && p !== '__metadata' && p !== '__typeName')
+        if (b.hasOwnProperty(p) && __skipExtends[p] !== true)
             d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var __assign = Object.assign || function (t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s)
+            if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+    }
+    return t;
+};
+var __rest = function (s, e) {
+    var t = {};
+    for (var p in s)
+        if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+            t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++)
+            if (e.indexOf(p[i]) < 0)
+                t[p[i]] = s[p[i]];
+    return t;
 };
 /**
  * Represents the completion of an asynchronous operation
@@ -778,10 +803,22 @@ var Q;
         return t;
     }
     Q.text = text;
+    function dbText(prefix) {
+        return function (key) {
+            return text("Db." + prefix + "." + key);
+        };
+    }
+    Q.dbText = dbText;
     function tryGetText(key) {
         return LT.$table[key];
     }
     Q.tryGetText = tryGetText;
+    function dbTryText(prefix) {
+        return function (key) {
+            return text("Db." + prefix + "." + key);
+        };
+    }
+    Q.dbTryText = dbTryText;
     var LT = /** @class */ (function () {
         function LT(key) {
             this.key = key;
@@ -2297,6 +2334,142 @@ var Q;
             });
         });
     })(Router = Q.Router || (Q.Router = {}));
+})(Q || (Q = {}));
+var Q;
+(function (Q) {
+    function extend(obj, props) {
+        for (var i in props)
+            obj[i] = props[i];
+        return obj;
+    }
+    Q.extend = extend;
+    var uniqueId = 0;
+    function uniqueIDCouple() {
+        var prefix = "uid_" + (++uniqueId) + "_";
+        return function () {
+            var counter = 0;
+            var flag = false;
+            return function () {
+                flag = !flag;
+                return prefix + (flag ? (++counter) : (counter));
+            };
+        };
+    }
+    Q.uniqueIDCouple = uniqueIDCouple;
+    function uniqueID() {
+        var prefix = "uid_" + (++uniqueId) + "_";
+        return function (id) {
+            return prefix + id;
+        };
+    }
+    Q.uniqueID = uniqueID;
+    function withUniqueID(action) {
+        var prefix = "uid_" + (++uniqueId) + "_";
+        return action(function (s) {
+            return prefix + s;
+        });
+    }
+    Q.withUniqueID = withUniqueID;
+    var hasOwn = {}.hasOwnProperty;
+    function cssClass() {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var classes = [];
+        for (var i = 0; i < arguments.length; i++) {
+            var arg = arguments[i];
+            if (!arg)
+                continue;
+            var argType = typeof arg;
+            if (argType === 'string' || argType === 'number') {
+                classes.push(arg);
+            }
+            else if (Array.isArray(arg) && arg.length) {
+                var inner = cssClass.apply(null, arg);
+                if (inner) {
+                    classes.push(inner);
+                }
+            }
+            else if (argType === 'object') {
+                for (var key in arg) {
+                    if (hasOwn.call(arg, key) && arg[key]) {
+                        classes.push(key);
+                    }
+                }
+            }
+        }
+        return classes.join(' ');
+    }
+    Q.cssClass = cssClass;
+    if (typeof React === "undefined" &&
+        window['preact'] != null) {
+        window['React'] = window['ReactDOM'] = window['preact'];
+    }
+    function widgetComponentFactory(widgetType) {
+        return (function (_super) {
+            __extends(Wrapper, _super);
+            function Wrapper() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            Wrapper.prototype.render = function () {
+                var _this = this;
+                return React.createElement("div", {
+                    ref: (function (el) { return _this.el = el; }),
+                    className: 'widget-wrapper'
+                });
+            };
+            Wrapper.prototype.componentDidMount = function () {
+                if (this.widget != null)
+                    return;
+                var $node = Serenity.Widget.elementFor(widgetType);
+                var node = $node[0];
+                this.el.appendChild(node);
+                var props = this.props;
+                if (props.id != null) {
+                    if (typeof props.id === "function") {
+                        if (props.name)
+                            node.id = props.id(props.name);
+                    }
+                    else
+                        node.id = props.id;
+                }
+                if (props.name != null)
+                    node.name = props.name;
+                if ($node.is(':input'))
+                    $node.addClass("editor");
+                if (props.class != null)
+                    $node.addClass(props.class);
+                this.widget = new widgetType($node, props);
+                if (props.maxLength != null)
+                    node.setAttribute("maxLength", props.maxLength.toString());
+                if (props.required)
+                    Serenity.EditorUtils.setRequired(this.widget, true);
+                if (props.readOnly)
+                    Serenity.EditorUtils.setReadOnly(this.widget, true);
+            };
+            Wrapper.prototype.componentWillUnmount = function () {
+                this.widget && this.widget.destroy();
+                this.widget = null;
+            };
+            Wrapper.prototype.shouldComponentUpdate = function () {
+                return false;
+            };
+            Wrapper.displayName = "Wrapped<" + ss.getTypeFullName(widgetType) + ">";
+            return Wrapper;
+        }(React.Component));
+    }
+    var reactCreateElement = React.createElement;
+    React.createElement = function () {
+        var arg = arguments[0];
+        if (typeof arg === "function" && arg.__isWidgetType === true) {
+            if (arg.__componentFactory === undefined)
+                arguments[0] = arg.__componentFactory = widgetComponentFactory(arg);
+            else
+                arguments[0] = arg.__componentFactory;
+        }
+        return reactCreateElement.apply(this, arguments);
+    };
 })(Q || (Q = {}));
 var Serenity;
 (function (Serenity) {
@@ -4076,30 +4249,32 @@ var Serenity;
         return IAsyncInit;
     }());
     Serenity.IAsyncInit = IAsyncInit;
-    var Widget = /** @class */ (function () {
+    var Widget = /** @class */ (function (_super) {
+        __extends(Widget, _super);
         function Widget(element, options) {
-            var _this = this;
-            this.element = element;
-            this.options = options || {};
-            this.widgetName = Widget_1.getWidgetName(ss.getInstanceType(this));
-            this.uniqueName = this.widgetName + (Widget_1.nextWidgetNumber++).toString();
-            if (element.data(this.widgetName)) {
-                throw new ss.Exception(Q.format("The element already has widget '{0}'!", this.widgetName));
+            var _this = _super.call(this, options) || this;
+            _this.element = element;
+            _this.options = options || {};
+            _this.widgetName = Widget_1.getWidgetName(ss.getInstanceType(_this));
+            _this.uniqueName = _this.widgetName + (Widget_1.nextWidgetNumber++).toString();
+            if (element.data(_this.widgetName)) {
+                throw new ss.Exception(Q.format("The element already has widget '{0}'!", _this.widgetName));
             }
-            element.bind('remove.' + this.widgetName, function (e) {
+            element.bind('remove.' + _this.widgetName, function (e) {
                 if (e.bubbles || e.cancelable) {
                     return;
                 }
                 _this.destroy();
-            }).data(this.widgetName, this);
-            this.addCssClass();
-            if (this.isAsyncWidget()) {
+            }).data(_this.widgetName, _this);
+            _this.addCssClass();
+            if (_this.isAsyncWidget()) {
                 window.setTimeout(function () {
                     if (element && !_this.asyncPromise) {
                         _this.asyncPromise = _this.initializeAsync();
                     }
                 }, 0);
             }
+            return _this;
         }
         Widget_1 = Widget;
         Widget.prototype.destroy = function () {
@@ -4179,12 +4354,13 @@ var Serenity;
             return this.asyncPromise;
         };
         Widget.nextWidgetNumber = 0;
+        Widget.__isWidgetType = true;
         Widget = Widget_1 = __decorate([
             Serenity.Decorators.registerClass()
         ], Widget);
         return Widget;
         var Widget_1;
-    }());
+    }(React.Component));
     Serenity.Widget = Widget;
     Widget.prototype.addValidationRule = function (eventClass, rule) {
         return Serenity.VX.addValidationRule(this.element, eventClass, rule);
@@ -10382,6 +10558,174 @@ var Serenity;
 })(Serenity || (Serenity = {}));
 var Serenity;
 (function (Serenity) {
+    var IntraUI;
+    (function (IntraUI) {
+        var Toolbar = /** @class */ (function (_super) {
+            __extends(Toolbar, _super);
+            function Toolbar() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            Toolbar.prototype.setupMouseTrap = function () {
+                var _this = this;
+                if (!window['Mousetrap'])
+                    return;
+                var buttons;
+                for (var _i = 0, _a = this.props.buttons || []; _i < _a.length; _i++) {
+                    var b = _a[_i];
+                    if (Q.isEmptyOrNull(b.hotkey))
+                        continue;
+                    this.mouseTrap = this.mouseTrap || window['Mousetrap'](this.props.hotkeyContext || window.document.documentElement);
+                    (function (x) {
+                        var btn = (buttons = buttons || $(_this.el).find(UI.ToolButton.buttonSelector))
+                            .filter("." + x.cssClass);
+                        _this.mouseTrap.bind(x.hotkey, function (e, action) {
+                            if (btn.is(':visible')) {
+                                btn.click();
+                            }
+                            return x.hotkeyAllowDefault;
+                        });
+                    })(b);
+                }
+            };
+            Toolbar.prototype.componentDidMount = function () {
+                this.setupMouseTrap();
+            };
+            Toolbar.prototype.componentWillUnmount = function () {
+                $(this.el).find(UI.ToolButton.buttonSelector).unbind('click');
+                if (this.mouseTrap) {
+                    if (!!this.mouseTrap.destroy) {
+                        this.mouseTrap.destroy();
+                    }
+                    else {
+                        this.mouseTrap.reset();
+                    }
+                    this.mouseTrap = null;
+                }
+            };
+            Toolbar.prototype.render = function () {
+                var _this = this;
+                return (React.createElement("div", { className: "tool-buttons", ref: function (el) { return _this.el = el; } },
+                    React.createElement("div", { className: "buttons-outer" }, this.renderButtons(this.props.buttons))));
+            };
+            Toolbar.prototype.renderButtons = function (buttons) {
+                var result = [];
+                for (var _i = 0, buttons_1 = buttons; _i < buttons_1.length; _i++) {
+                    var btn = buttons_1[_i];
+                    if (btn.separator)
+                        result.push(React.createElement("div", { className: "separator", key: result.length }));
+                    result.push(React.createElement(UI.ToolButton, __assign({}, btn, { key: result.length })));
+                }
+                var key = 0;
+                return (React.createElement("div", { className: "buttons-inner" },
+                    result.map(function (x) { x.key = ++key; return x; }),
+                    this.props.children));
+            };
+            return Toolbar;
+        }(React.Component));
+        IntraUI.Toolbar = Toolbar;
+    })(IntraUI = Serenity.IntraUI || (Serenity.IntraUI = {}));
+    var UI;
+    (function (UI) {
+        var ToolButton = /** @class */ (function (_super) {
+            __extends(ToolButton, _super);
+            function ToolButton() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            ToolButton.adjustIconClass = function (icon) {
+                if (!icon)
+                    return icon;
+                if (Q.startsWith(icon, 'fa-'))
+                    return 'fa ' + icon;
+                if (Q.startsWith(icon, 'glyphicon-'))
+                    return 'glyphicon ' + icon;
+                return icon;
+            };
+            ToolButton.className = function (btn) {
+                return Q.cssClass((_a = {
+                        "tool-button": true,
+                        "icon-tool-button": !!btn.icon,
+                        "no-text": !btn.title,
+                        disabled: btn.disabled
+                    },
+                    _a[btn.cssClass] = !!btn.cssClass,
+                    _a));
+                var _a;
+            };
+            ToolButton.prototype.handleClick = function (e) {
+                if (!this.props.onClick || $(e.currentTarget).hasClass('disabled'))
+                    return;
+                this.props.onClick(e);
+            };
+            ToolButton.prototype.render = function () {
+                var _this = this;
+                return (React.createElement("div", { className: ToolButton.className(this.props), title: this.props.hint, onClick: function (e) { return _this.handleClick(e); } },
+                    React.createElement("div", { className: "button-outer" }, this.renderButtonText())));
+            };
+            ToolButton.prototype.renderButtonText = function () {
+                var btn = this.props;
+                var klass = ToolButton.adjustIconClass(btn.icon);
+                if (!klass && !btn.title)
+                    return React.createElement("span", { className: "button-inner" });
+                if (!btn.htmlEncode) {
+                    var h = (klass ? '<i class="' + Q.attrEncode(klass) + '"></i> ' : '') + btn.title;
+                    return (React.createElement("span", { className: "button-inner", dangerouslySetInnerHTML: { __html: h } }));
+                }
+                if (!klass)
+                    return React.createElement("span", { className: "button-inner" }, btn.title);
+                return React.createElement("span", { className: "button-inner" },
+                    React.createElement("i", { className: klass }),
+                    btn.title);
+            };
+            ToolButton.buttonSelector = "div.tool-button";
+            return ToolButton;
+        }(React.Component));
+        UI.ToolButton = ToolButton;
+        var Toolbar = /** @class */ (function (_super) {
+            __extends(Toolbar, _super);
+            function Toolbar() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            Toolbar.prototype.render = function () {
+                return (React.createElement("div", { className: "s-Toolbar clearfix" }, _super.prototype.render));
+            };
+            return Toolbar;
+        }(IntraUI.Toolbar));
+        UI.Toolbar = Toolbar;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+    var Toolbar = /** @class */ (function (_super) {
+        __extends(Toolbar, _super);
+        function Toolbar(div, options) {
+            var _this = _super.call(this, div, options) || this;
+            if (div.length) {
+                _this.toolbar = ReactDOM.render(React.createElement(IntraUI.Toolbar, options), div[0]);
+            }
+            return _this;
+        }
+        Toolbar.prototype.destroy = function () {
+            if (this.toolbar != null && this.toolbar.el != null) {
+                // we used to insert elements to toolbar element, and React expects it to be at start
+                if ($(this.toolbar.el).index() != 0)
+                    $(this.toolbar.el).prependTo(this.element);
+                ReactDOM.unmountComponentAtNode(this.element[0]);
+                this.toolbar = null;
+            }
+            _super.prototype.destroy.call(this);
+        };
+        Toolbar.prototype.findButton = function (className) {
+            if (className != null && Q.startsWith(className, '.')) {
+                className = className.substr(1);
+            }
+            return $(UI.ToolButton.buttonSelector + '.' + className, this.element);
+        };
+        Toolbar = __decorate([
+            Serenity.Decorators.registerClass('Serenity.Toolbar')
+        ], Toolbar);
+        return Toolbar;
+    }(Serenity.Widget));
+    Serenity.Toolbar = Toolbar;
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
     var PopupMenuButton = /** @class */ (function (_super) {
         __extends(PopupMenuButton, _super);
         function PopupMenuButton(div, opt) {
@@ -10435,96 +10779,6 @@ var Serenity;
         return PopupToolButton;
     }(PopupMenuButton));
     Serenity.PopupToolButton = PopupToolButton;
-    var Toolbar = /** @class */ (function (_super) {
-        __extends(Toolbar, _super);
-        function Toolbar(div, options) {
-            var _this = _super.call(this, div, options) || this;
-            _this.element.addClass('s-Toolbar clearfix')
-                .html('<div class="tool-buttons"><div class="buttons-outer">' +
-                '<div class="buttons-inner"></div></div></div>');
-            var container = $('div.buttons-inner', _this.element);
-            var buttons = _this.options.buttons;
-            for (var i = 0; i < buttons.length; i++) {
-                _this.createButton(container, buttons[i]);
-            }
-            return _this;
-        }
-        Toolbar.prototype.destroy = function () {
-            this.element.find('div.tool-button').unbind('click');
-            if (this.mouseTrap) {
-                if (!!this.mouseTrap.destroy) {
-                    this.mouseTrap.destroy();
-                }
-                else {
-                    this.mouseTrap.reset();
-                }
-                this.mouseTrap = null;
-            }
-            _super.prototype.destroy.call(this);
-        };
-        Toolbar.prototype.createButton = function (container, b) {
-            var cssClass = Q.coalesce(b.cssClass, '');
-            if (b.separator === true) {
-                $('<div class="separator"></div>').appendTo(container);
-            }
-            var btn = $('<div class="tool-button"><div class="button-outer">' +
-                '<span class="button-inner"></span></div></div>')
-                .appendTo(container);
-            if (cssClass.length > 0) {
-                btn.addClass(cssClass);
-            }
-            if (!Q.isEmptyOrNull(b.hint)) {
-                btn.attr('title', b.hint);
-            }
-            btn.click(function (e) {
-                if (btn.hasClass('disabled')) {
-                    return;
-                }
-                b.onClick(e);
-            });
-            var text = b.title;
-            if (b.htmlEncode !== false) {
-                text = Q.htmlEncode(b.title);
-            }
-            if (!Q.isEmptyOrNull(b.icon)) {
-                btn.addClass('icon-tool-button');
-                var klass = b.icon;
-                if (Q.startsWith(klass, 'fa-')) {
-                    klass = 'fa ' + klass;
-                }
-                else if (Q.startsWith(klass, 'glyphicon-')) {
-                    klass = 'glyphicon ' + klass;
-                }
-                text = "<i class='" + klass + "'></i> " + text;
-            }
-            if (text == null || text.length === 0) {
-                btn.addClass('no-text');
-            }
-            else {
-                btn.find('span').html(text);
-            }
-            if (!!(!Q.isEmptyOrNull(b.hotkey) && window['Mousetrap'] != null)) {
-                this.mouseTrap = this.mouseTrap || window['Mousetrap'](this.options.hotkeyContext || window.document.documentElement);
-                this.mouseTrap.bind(b.hotkey, function (e1, action) {
-                    if (btn.is(':visible')) {
-                        btn.triggerHandler('click');
-                    }
-                    return b.hotkeyAllowDefault;
-                });
-            }
-        };
-        Toolbar.prototype.findButton = function (className) {
-            if (className != null && Q.startsWith(className, '.')) {
-                className = className.substr(1);
-            }
-            return $('div.tool-button.' + className, this.element);
-        };
-        Toolbar = __decorate([
-            Serenity.Decorators.registerClass('Serenity.Toolbar')
-        ], Toolbar);
-        return Toolbar;
-    }(Serenity.Widget));
-    Serenity.Toolbar = Toolbar;
 })(Serenity || (Serenity = {}));
 var Serenity;
 (function (Serenity) {
@@ -10763,7 +11017,7 @@ var Serenity;
         };
         TemplatedDialog.prototype.onDialogOpen = function () {
             if (!$(document.body).hasClass('mobile-device'))
-                $(':input:eq(0)', this.element).focus();
+                $(':input', this.element).not('button').eq(0).focus();
             this.arrange();
             this.tabs && this.tabs.tabs('option', 'active', 0);
         };
