@@ -18,7 +18,7 @@
         hotkeyContext?: any;
     }
 
-    export namespace IntraUI {
+    export namespace InterUI {
 
         export class Toolbar extends React.Component<Serenity.ToolbarOptions> {
 
@@ -101,6 +101,7 @@
 
     export namespace UI {
 
+        @Decorators.registerClass("Serenity.UI.ToolButton")
         export class ToolButton extends React.Component<Serenity.ToolButton> {
 
             static buttonSelector = "div.tool-button";
@@ -164,7 +165,8 @@
             }
         }
 
-        export class Toolbar extends IntraUI.Toolbar {
+        @Decorators.registerClass("Serenity.UI.Toolbar")
+        export class Toolbar extends InterUI.Toolbar {
             render() {
                 return (
                     <div className="s-Toolbar clearfix">
@@ -178,13 +180,13 @@
     @Decorators.registerClass('Serenity.Toolbar')
     export class Toolbar extends Widget<ToolbarOptions> {
 
-        protected toolbar: IntraUI.Toolbar;
+        protected toolbar: InterUI.Toolbar;
 
         constructor(div: JQuery, options: ToolbarOptions) {
             super(div, options);
 
             if (div.length) {
-                this.toolbar = ReactDOM.render(React.createElement(IntraUI.Toolbar, options), div[0]);
+                this.toolbar = ReactDOM.render(React.createElement(InterUI.Toolbar, options), div[0]);
             }
         }
 

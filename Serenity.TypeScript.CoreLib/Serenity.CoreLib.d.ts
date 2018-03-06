@@ -732,12 +732,12 @@ declare namespace Q {
     function getLookupAsync<TItem>(key: string): PromiseLike<Lookup<TItem>>;
     function reloadLookup(key: string): void;
     function reloadLookupAsync(key: string): PromiseLike<any>;
-    function getColumns(key: string): any;
-    function getColumnsAsync(key: string): PromiseLike<any>;
-    function getForm(key: string): any;
-    function getFormAsync(key: string): PromiseLike<any>;
-    function getTemplate(key: string): any;
-    function getTemplateAsync(key: string): PromiseLike<any>;
+    function getColumns(key: string): Serenity.PropertyItem[];
+    function getColumnsAsync(key: string): PromiseLike<Serenity.PropertyItem[]>;
+    function getForm(key: string): Serenity.PropertyItem[];
+    function getFormAsync(key: string): PromiseLike<Serenity.PropertyItem[]>;
+    function getTemplate(key: string): string;
+    function getTemplateAsync(key: string): PromiseLike<string>;
     function canLoadScriptData(name: string): boolean;
 }
 declare namespace Q {
@@ -775,9 +775,7 @@ declare namespace Q.Router {
 }
 declare namespace Q {
     function extend(obj: any, props: any): any;
-    function uniqueIDCouple(): () => (() => string);
-    function uniqueID(): ((id: string) => string);
-    function withUniqueID<T>(action: (uid: (id: string) => string) => T): T;
+    function uidGenerator(): () => (() => string);
     function cssClass(...args: any[]): string;
 }
 declare namespace Serenity {
@@ -2268,7 +2266,7 @@ declare namespace Serenity {
         buttons?: ToolButton[];
         hotkeyContext?: any;
     }
-    namespace IntraUI {
+    namespace InterUI {
         class Toolbar extends React.Component<Serenity.ToolbarOptions> {
             el: Element;
             protected mouseTrap: any;
@@ -2288,12 +2286,12 @@ declare namespace Serenity {
             render(): JSX.Element;
             renderButtonText(): JSX.Element;
         }
-        class Toolbar extends IntraUI.Toolbar {
+        class Toolbar extends InterUI.Toolbar {
             render(): JSX.Element;
         }
     }
     class Toolbar extends Widget<ToolbarOptions> {
-        protected toolbar: IntraUI.Toolbar;
+        protected toolbar: InterUI.Toolbar;
         constructor(div: JQuery, options: ToolbarOptions);
         destroy(): void;
         findButton(className: string): JQuery;
@@ -2820,7 +2818,7 @@ declare namespace Serenity {
         protected getPendingLocalizations(): any;
         protected initPropertyGrid(): void;
         protected initPropertyGridAsync(): PromiseLike<void>;
-        protected getPropertyItems(): any;
+        protected getPropertyItems(): PropertyItem[];
         protected getPropertyGridOptions(): PropertyGridOptions;
         protected getPropertyGridOptionsAsync(): PromiseLike<PropertyGridOptions>;
         protected getPropertyItemsAsync(): PromiseLike<PropertyItem[]>;

@@ -8,30 +8,14 @@ namespace Q {
 
     var uniqueId = 0;
 
-    export function uniqueIDCouple(): () => (() => string) {
+    export function uidGenerator(): () => (() => string) {
         var prefix = "uid_" + (++uniqueId) + "_";
         return function () {
             var counter = 0;
-            var flag = false;
             return function () {
-                flag = !flag;
-                return prefix + (flag ? (++counter) : (counter));
+                return prefix + (++counter);
             }
         }
-    }
-
-    export function uniqueID(): ((id: string) => string) {
-        var prefix = "uid_" + (++uniqueId) + "_";
-        return function (id) {
-            return prefix + id;
-        }
-    }
-
-    export function withUniqueID<T>(action: (uid: (id: string) => string) => T): T {
-        var prefix = "uid_" + (++uniqueId) + "_";
-        return action(function (s) {
-            return prefix + s;
-        });
     }
 
     var hasOwn = {}.hasOwnProperty;

@@ -2344,32 +2344,16 @@ var Q;
     }
     Q.extend = extend;
     var uniqueId = 0;
-    function uniqueIDCouple() {
+    function uidGenerator() {
         var prefix = "uid_" + (++uniqueId) + "_";
         return function () {
             var counter = 0;
-            var flag = false;
             return function () {
-                flag = !flag;
-                return prefix + (flag ? (++counter) : (counter));
+                return prefix + (++counter);
             };
         };
     }
-    Q.uniqueIDCouple = uniqueIDCouple;
-    function uniqueID() {
-        var prefix = "uid_" + (++uniqueId) + "_";
-        return function (id) {
-            return prefix + id;
-        };
-    }
-    Q.uniqueID = uniqueID;
-    function withUniqueID(action) {
-        var prefix = "uid_" + (++uniqueId) + "_";
-        return action(function (s) {
-            return prefix + s;
-        });
-    }
-    Q.withUniqueID = withUniqueID;
+    Q.uidGenerator = uidGenerator;
     var hasOwn = {}.hasOwnProperty;
     function cssClass() {
         var args = [];
@@ -10558,8 +10542,8 @@ var Serenity;
 })(Serenity || (Serenity = {}));
 var Serenity;
 (function (Serenity) {
-    var IntraUI;
-    (function (IntraUI) {
+    var InterUI;
+    (function (InterUI) {
         var Toolbar = /** @class */ (function (_super) {
             __extends(Toolbar, _super);
             function Toolbar() {
@@ -10622,8 +10606,8 @@ var Serenity;
             };
             return Toolbar;
         }(React.Component));
-        IntraUI.Toolbar = Toolbar;
-    })(IntraUI = Serenity.IntraUI || (Serenity.IntraUI = {}));
+        InterUI.Toolbar = Toolbar;
+    })(InterUI = Serenity.InterUI || (Serenity.InterUI = {}));
     var UI;
     (function (UI) {
         var ToolButton = /** @class */ (function (_super) {
@@ -10631,6 +10615,7 @@ var Serenity;
             function ToolButton() {
                 return _super !== null && _super.apply(this, arguments) || this;
             }
+            ToolButton_1 = ToolButton;
             ToolButton.adjustIconClass = function (icon) {
                 if (!icon)
                     return icon;
@@ -10658,12 +10643,12 @@ var Serenity;
             };
             ToolButton.prototype.render = function () {
                 var _this = this;
-                return (React.createElement("div", { className: ToolButton.className(this.props), title: this.props.hint, onClick: function (e) { return _this.handleClick(e); } },
+                return (React.createElement("div", { className: ToolButton_1.className(this.props), title: this.props.hint, onClick: function (e) { return _this.handleClick(e); } },
                     React.createElement("div", { className: "button-outer" }, this.renderButtonText())));
             };
             ToolButton.prototype.renderButtonText = function () {
                 var btn = this.props;
-                var klass = ToolButton.adjustIconClass(btn.icon);
+                var klass = ToolButton_1.adjustIconClass(btn.icon);
                 if (!klass && !btn.title)
                     return React.createElement("span", { className: "button-inner" });
                 if (!btn.htmlEncode) {
@@ -10677,7 +10662,11 @@ var Serenity;
                     btn.title);
             };
             ToolButton.buttonSelector = "div.tool-button";
+            ToolButton = ToolButton_1 = __decorate([
+                Serenity.Decorators.registerClass("Serenity.UI.ToolButton")
+            ], ToolButton);
             return ToolButton;
+            var ToolButton_1;
         }(React.Component));
         UI.ToolButton = ToolButton;
         var Toolbar = /** @class */ (function (_super) {
@@ -10688,8 +10677,11 @@ var Serenity;
             Toolbar.prototype.render = function () {
                 return (React.createElement("div", { className: "s-Toolbar clearfix" }, _super.prototype.render));
             };
+            Toolbar = __decorate([
+                Serenity.Decorators.registerClass("Serenity.UI.Toolbar")
+            ], Toolbar);
             return Toolbar;
-        }(IntraUI.Toolbar));
+        }(InterUI.Toolbar));
         UI.Toolbar = Toolbar;
     })(UI = Serenity.UI || (Serenity.UI = {}));
     var Toolbar = /** @class */ (function (_super) {
@@ -10697,7 +10689,7 @@ var Serenity;
         function Toolbar(div, options) {
             var _this = _super.call(this, div, options) || this;
             if (div.length) {
-                _this.toolbar = ReactDOM.render(React.createElement(IntraUI.Toolbar, options), div[0]);
+                _this.toolbar = ReactDOM.render(React.createElement(InterUI.Toolbar, options), div[0]);
             }
             return _this;
         }
