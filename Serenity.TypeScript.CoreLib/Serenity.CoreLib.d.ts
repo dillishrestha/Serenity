@@ -1103,15 +1103,6 @@ declare namespace Serenity {
 declare namespace Serenity {
     class IAsyncInit {
     }
-    interface WidgetComponentProps<W extends Serenity.Widget<any>> {
-        id?: string | ((name: string) => string);
-        name?: string;
-        class?: string;
-        maxLength?: number;
-        required?: boolean;
-        readOnly?: boolean;
-        ref?: (el: W) => void;
-    }
     class Widget<TOptions> extends React.Component<TOptions, any> {
         private static nextWidgetNumber;
         element: JQuery;
@@ -1136,6 +1127,17 @@ declare namespace Serenity {
         props: Readonly<{
             children?: React.ReactNode;
         }> & Readonly<TOptions> & WidgetComponentProps<this>;
+    }
+    interface WidgetComponentProps<W extends Serenity.Widget<any>> {
+        id?: string | ((name: string) => string);
+        name?: string;
+        class?: string;
+        maxLength?: number;
+        placeholder?: string;
+        setOptions?: any;
+        required?: boolean;
+        readOnly?: boolean;
+        ref?: (el: W) => void;
     }
     interface Widget<TOptions> {
         addValidationRule(eventClass: string, rule: (p1: JQuery) => string): JQuery;

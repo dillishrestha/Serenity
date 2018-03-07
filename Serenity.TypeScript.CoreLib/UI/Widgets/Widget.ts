@@ -4,16 +4,6 @@
     export class IAsyncInit {
     }
 
-    export interface WidgetComponentProps<W extends Serenity.Widget<any>> {
-        id?: string | ((name: string) => string);
-        name?: string;
-        class?: string;
-        maxLength?: number;
-        required?: boolean;
-        readOnly?: boolean;
-        ref?: (el: W) => void;
-    }
-
     @Serenity.Decorators.registerClass()
     export class Widget<TOptions> extends React.Component<TOptions, any> {
         private static nextWidgetNumber = 0;
@@ -146,6 +136,18 @@
 
         private static __isWidgetType = true;
         props: Readonly<{ children?: React.ReactNode }> & Readonly<TOptions> & WidgetComponentProps<this>;
+    }
+
+    export interface WidgetComponentProps<W extends Serenity.Widget<any>> {
+        id?: string | ((name: string) => string);
+        name?: string;
+        class?: string;
+        maxLength?: number;
+        placeholder?: string;
+        setOptions?: any;
+        required?: boolean;
+        readOnly?: boolean;
+        ref?: (el: W) => void;
     }
 
     export declare interface Widget<TOptions> {

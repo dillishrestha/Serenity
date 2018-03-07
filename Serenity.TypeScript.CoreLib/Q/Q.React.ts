@@ -89,11 +89,14 @@ namespace Q {
                         node.id = props.id as string;
                 }
 
-                if (props.name != null)
-                    (node as any).name = props.name;
-
-                if ($node.is(':input'))
+                if ($node.is(':input')) {
                     $node.addClass("editor");
+                    if (props.name != null)
+                        (node as any).name = props.name;
+
+                    if (props.placeholder != null)
+                        (node as any).placeholder = props.placeholder;
+                }
 
                 if (props.class != null)
                     $node.addClass(props.class);
@@ -108,6 +111,10 @@ namespace Q {
 
                 if (props.readOnly)
                     Serenity.EditorUtils.setReadOnly(this.widget, true);
+
+                if (props.setOptions != null) {
+                    Serenity.ReflectionOptionsSetter.set(this.widget, props.setOptions);
+                }
             }
 
             Wrapper.prototype.componentWillUnmount = function () {
