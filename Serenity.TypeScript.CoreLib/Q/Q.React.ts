@@ -51,6 +51,7 @@ namespace Q {
     if (typeof React === "undefined" &&
         window['preact'] != null) {
         window['React'] = window['ReactDOM'] = window['preact'];
+        (React as any).Fragment = "x-fragment";
     }
 
     function widgetComponentFactory(widgetType: any) {

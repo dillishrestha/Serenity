@@ -2389,6 +2389,7 @@ var Q;
     if (typeof React === "undefined" &&
         window['preact'] != null) {
         window['React'] = window['ReactDOM'] = window['preact'];
+        React.Fragment = "x-fragment";
     }
     function widgetComponentFactory(widgetType) {
         return (function (_super) {
