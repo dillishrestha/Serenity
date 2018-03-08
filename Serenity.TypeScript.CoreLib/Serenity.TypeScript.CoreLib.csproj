@@ -54,6 +54,14 @@
     <TypeScriptCompile Include="Imports\jQueryStatic.ts" />
     <TypeScriptCompile Include="Imports\JQBlockUI.ts" />
     <TypeScriptCompile Include="Q\Q.React.ts" />
+    <TypeScriptCompile Include="ReactUI\ButtonPanel.tsx" />
+    <TypeScriptCompile Include="ReactUI\Forms\Category.tsx" />
+    <TypeScriptCompile Include="ReactUI\Forms\PropertyField.tsx" />
+    <TypeScriptCompile Include="ReactUI\Forms\Form.tsx" />
+    <TypeScriptCompile Include="ReactUI\Forms\Field.tsx" />
+    <TypeScriptCompile Include="ReactUI\Forms\ValidateForm.tsx" />
+    <TypeScriptCompile Include="ReactUI\Forms\ValidationMark.tsx" />
+    <TypeScriptCompile Include="ReactUI\Forms\Label.tsx" />
     <TypeScriptCompile Include="Services\ServiceError.ts" />
     <TypeScriptCompile Include="Services\ServiceResponse.ts" />
     <TypeScriptCompile Include="Q\Q.BasicUtils.ts" />
@@ -81,7 +89,7 @@
     <TypeScriptCompile Include="UI\Helpers\SubDialogHelper.ts" />
     <TypeScriptCompile Include="UI\Helpers\TabsExtensions.ts" />
     <TypeScriptCompile Include="UI\Helpers\UploadHelper.ts" />
-    <TypeScriptCompile Include="UI\Widgets\Toolbar.tsx" />
+    <TypeScriptCompile Include="UI\Widgets\Toolbar.ts" />
     <TypeScriptCompile Include="UI\Widgets\Widget.ts" />
     <TypeScriptCompile Include="UI\Helpers\ValidationHelper.ts" />
     <TypeScriptCompile Include="UI\Widgets\TemplatedWidget.ts" />
@@ -136,6 +144,7 @@
     <TypeScriptCompile Include="Externals\Serenity.Externals.Slick.ts" />
     <TypeScriptCompile Include="Externals\Serenity.Externals.ts" />
     <None Include="Serenity.CoreLib.d.ts" />
+    <TypeScriptCompile Include="ReactUI\Toolbar.tsx" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Serenity.CoreLib.js" />
@@ -148,6 +157,7 @@
     <None Include="tsconfig.json" />
     <None Include="tslint.json" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="NpmInstall" BeforeTargets="BeforeBuild" Condition="!Exists('node_modules\@types\jquery\index.d.ts')">
     <Message Text="Installing NPM packages..." Importance="high">

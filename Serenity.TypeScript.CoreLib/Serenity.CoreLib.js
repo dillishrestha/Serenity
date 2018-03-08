@@ -168,6 +168,19 @@ var Q;
     }
     Q.toGrouping = toGrouping;
     /**
+     * Maps an array into custom groups
+     */
+    function createGroups(items, getKey, action, sortByKey) {
+        items = items || [];
+        if (sortByKey) {
+            items = items.slice();
+            items.sort(function (x, y) {
+                return ;
+            });
+        }
+    }
+    Q.createGroups = createGroups;
+    /**
      * Gets first element in an array that matches given predicate.
      * Returns null if no match is found.
      */
@@ -809,6 +822,28 @@ var Q;
         };
     }
     Q.dbText = dbText;
+    function prefixedText(prefix) {
+        return function (text, key) {
+            if (text != null && !Q.startsWith(text, '`')) {
+                var local = Q.tryGetText(text);
+                if (local != null) {
+                    return local;
+                }
+            }
+            if (text != null && Q.startsWith(text, '`')) {
+                text = text.substr(1);
+            }
+            if (!Q.isEmptyOrNull(prefix)) {
+                var textKey = typeof (key) == "function" ? key(prefix) : (prefix + key);
+                var localText = Q.tryGetText(textKey);
+                if (localText != null) {
+                    return localText;
+                }
+            }
+            return text;
+        };
+    }
+    Q.prefixedText = prefixedText;
     function tryGetText(key) {
         return LT.$table[key];
     }
@@ -3225,6 +3260,407 @@ var Serenity;
         }
         Criteria.or = or;
     })(Criteria = Serenity.Criteria || (Serenity.Criteria = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var Label = /** @class */ (function (_super) {
+            __extends(Label, _super);
+            function Label() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            Label.prototype.render = function () {
+                var props = this.props;
+                var width = typeof props.width == "string" || props.width == null ? null :
+                    (typeof (props.width) == "number" ? props.width + "px" :
+                        props.width);
+                var style = width == null ? null : (width == "0" ? { display: "none" } : { width: width });
+                return (React.createElement("label", { className: "caption", htmlFor: props.htmlFor, title: props.hint, style: style },
+                    props.required && React.createElement("sup", { title: Q.text('Controls.PropertyGrid.RequiredHint') }, "*"),
+                    props.children));
+            };
+            return Label;
+        }(React.Component));
+        UI.Label = Label;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var ValidationMark = /** @class */ (function (_super) {
+            __extends(ValidationMark, _super);
+            function ValidationMark() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            ValidationMark.prototype.render = function () {
+                return (React.createElement("div", { className: "vx" }));
+            };
+            ValidationMark.prototype.shouldComponentUpdate = function () {
+                return false;
+            };
+            return ValidationMark;
+        }(React.Component));
+        UI.ValidationMark = ValidationMark;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var Field = /** @class */ (function (_super) {
+            __extends(Field, _super);
+            function Field() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            Field.prototype.render = function () {
+                var props = this.props;
+                var lblElement;
+                if (props.label != null)
+                    lblElement = props.label(this.props);
+                else if (props.caption !== false) {
+                    lblElement = (React.createElement(UI.Label, { htmlFor: props.htmlFor === undefined ? props.id : props.htmlFor, hint: props.hint, width: props.labelWidth, required: props.required }, props.caption));
+                }
+                var className = "field";
+                if (props.name) {
+                    className += " " + props.name;
+                }
+                if (props.className) {
+                    className += " " + props.className;
+                }
+                return (React.createElement("div", { className: className },
+                    lblElement,
+                    props.editor != null && props.editor(props),
+                    props.children,
+                    props.vx !== false && React.createElement(UI.ValidationMark, null),
+                    React.createElement("div", { className: "clear" })));
+            };
+            return Field;
+        }(React.Component));
+        UI.Field = Field;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var PropertyField = /** @class */ (function (_super) {
+            __extends(PropertyField, _super);
+            function PropertyField() {
+                var _this = _super !== null && _super.apply(this, arguments) || this;
+                _this.text = Q.prefixedText(_this.props.localTextPrefix);
+                return _this;
+            }
+            PropertyField.prototype.getCaption = function () {
+                return this.text(this.props.title, this.props.name);
+            };
+            PropertyField.prototype.getHint = function () {
+                var hint = this.text(this.props.hint, this.props.name + '_Hint');
+                if (hint == null)
+                    return this.getCaption();
+                return hint || null;
+            };
+            PropertyField.prototype.getPlaceHolder = function () {
+                return this.text(this.props.placeholder, this.props.name + '_Placeholder');
+            };
+            PropertyField.prototype.getClassName = function () {
+                var className = this.props.cssClass || "";
+                if (!Q.isEmptyOrNull(this.props.formCssClass)) {
+                    className += (className ? " " : "") + this.props.formCssClass;
+                }
+                return className;
+            };
+            PropertyField.prototype.getHtmlFor = function (editorType) {
+                var htmlFor;
+                if ((editorType === Serenity.RadioButtonEditor || editorType === Serenity.BooleanEditor) &&
+                    (this.props.editorParams == null || !!!this.props.editorParams['labelFor'])) {
+                    htmlFor = null;
+                }
+                return htmlFor;
+            };
+            PropertyField.prototype.getEditorType = function () {
+                return Serenity.EditorTypeRegistry
+                    .get(Q.coalesce(this.props.editorType, 'String'));
+            };
+            PropertyField.prototype.getEditorId = function () {
+                return (this.props.idPrefix || "") + (this.props.name || "");
+            };
+            PropertyField.prototype.getMaxLength = function () {
+                return this.props.maxLength > 0 ? this.props.maxLength : null;
+            };
+            PropertyField.prototype.render = function () {
+                var _this = this;
+                var EditorType = this.getEditorType();
+                return (React.createElement(UI.Field, { className: this.getClassName(), caption: this.getCaption(), id: this.getEditorId(), labelWidth: this.props.labelWidth, htmlFor: this.getHtmlFor(EditorType), hint: this.getHint(), required: this.props.required, editor: function (ed) { return React.createElement(EditorType, __assign({}, ed, { maxlength: _this.getMaxLength() }, _this.props.editorParams, { setOptions: _this.props.editorParams })); } }));
+            };
+            return PropertyField;
+        }(React.Component));
+        UI.PropertyField = PropertyField;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var Category = /** @class */ (function (_super) {
+            __extends(Category, _super);
+            function Category() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            Category.prototype.renderBreak = function (formClass) {
+                var breakClass = "line-break";
+                var splitted = formClass.split(' ');
+                if (splitted.indexOf('line-break-xs') >= 0) {
+                }
+                else if (splitted.indexOf('line-break-sm') >= 0) {
+                    breakClass += " hidden-xs";
+                }
+                else if (splitted.indexOf('line-break-md') >= 0) {
+                    breakClass += " hidden-sm";
+                }
+                else if (splitted.indexOf('line-break-lg') >= 0) {
+                    breakClass += " hidden-md";
+                }
+                return (React.createElement("div", { className: breakClass, style: { width: "100%" } }));
+            };
+            Category.prototype.render = function () {
+                var _this = this;
+                var props = this.props;
+                return (React.createElement("div", { className: "category" },
+                    props.items && props.items.map(function (x) {
+                        if (x.formCssClass && x.formCssClass.indexOf('line-break-') >= 0) {
+                            return (React.createElement(React.Fragment, { key: x.name },
+                                _this.renderBreak(x.formCssClass),
+                                React.createElement(UI.PropertyField, __assign({}, x)),
+                                ">"));
+                        }
+                        return (React.createElement(UI.PropertyField, __assign({ idPrefix: props.idPrefix, localTextPrefix: props.localTextPrefix }, x, { key: x.name })));
+                    }),
+                    props.children));
+            };
+            return Category;
+        }(React.Component));
+        UI.Category = Category;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var ValidateForm = /** @class */ (function (_super) {
+            __extends(ValidateForm, _super);
+            function ValidateForm() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            ValidateForm.prototype.render = function () {
+                var _this = this;
+                var _a = this.props, options = _a.options, other = __rest(_a, ["options"]);
+                return (React.createElement("form", __assign({}, other, { ref: function (el) { _this.form = el; }, onSubmit: this.props.onSubmit || (function (e) { return _this.handleSubmit(e); }) }), this.props.children));
+            };
+            ValidateForm.prototype.handleSubmit = function (e) {
+            };
+            ValidateForm.prototype.componentDidMount = function () {
+                this.validator = $(this.form).validate(Q.validateOptions(this.props.options));
+            };
+            ValidateForm.prototype.validateForm = function () {
+                return this.validator == null || !!this.validator.form();
+            };
+            ValidateForm.prototype.serialize = function () {
+                var result = {};
+                $(this.form).find(':input, .editor').each(function (i, e) {
+                    var name = $(e).attr('name');
+                    if (!name)
+                        return;
+                    var widget = $(e).tryGetWidget(Serenity.Widget);
+                    if (widget)
+                        result[name] = Serenity.EditorUtils.getValue(widget);
+                    else
+                        result[name] = $(e).val();
+                });
+                return result;
+            };
+            return ValidateForm;
+        }(React.Component));
+        UI.ValidateForm = ValidateForm;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var Form = /** @class */ (function (_super) {
+            __extends(Form, _super);
+            function Form() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            Form.prototype.render = function () {
+                return (React.createElement("div", { className: "flex-layout" },
+                    React.createElement("div", { className: "s-Form" }, _super.prototype.render.call(this))));
+            };
+            return Form;
+        }(UI.ValidateForm));
+        UI.Form = Form;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var ButtonPanel = /** @class */ (function (_super) {
+            __extends(ButtonPanel, _super);
+            function ButtonPanel() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            ButtonPanel.prototype.render = function () {
+                return (React.createElement("div", { className: "align-right", style: { marginTop: "10px", paddingRight: "24px" } }, this.props.children));
+            };
+            return ButtonPanel;
+        }(React.Component));
+        UI.ButtonPanel = ButtonPanel;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var ToolButton = /** @class */ (function (_super) {
+            __extends(ToolButton, _super);
+            function ToolButton() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            ToolButton_1 = ToolButton;
+            ToolButton.adjustIconClass = function (icon) {
+                if (!icon)
+                    return icon;
+                if (Q.startsWith(icon, 'fa-'))
+                    return 'fa ' + icon;
+                if (Q.startsWith(icon, 'glyphicon-'))
+                    return 'glyphicon ' + icon;
+                return icon;
+            };
+            ToolButton.className = function (btn) {
+                return Q.cssClass((_a = {
+                        "tool-button": true,
+                        "icon-tool-button": !!btn.icon,
+                        "no-text": !btn.title,
+                        disabled: btn.disabled
+                    },
+                    _a[btn.cssClass] = !!btn.cssClass,
+                    _a));
+                var _a;
+            };
+            ToolButton.prototype.handleClick = function (e) {
+                if (!this.props.onClick || $(e.currentTarget).hasClass('disabled'))
+                    return;
+                this.props.onClick(e);
+            };
+            ToolButton.prototype.render = function () {
+                var _this = this;
+                return (React.createElement("div", { className: ToolButton_1.className(this.props), title: this.props.hint, onClick: function (e) { return _this.handleClick(e); } },
+                    React.createElement("div", { className: "button-outer" }, this.renderButtonText())));
+            };
+            ToolButton.prototype.renderButtonText = function () {
+                var btn = this.props;
+                var klass = ToolButton_1.adjustIconClass(btn.icon);
+                if (!klass && !btn.title)
+                    return React.createElement("span", { className: "button-inner" });
+                if (!btn.htmlEncode) {
+                    var h = (klass ? '<i class="' + Q.attrEncode(klass) + '"></i> ' : '') + btn.title;
+                    return (React.createElement("span", { className: "button-inner", dangerouslySetInnerHTML: { __html: h } }));
+                }
+                if (!klass)
+                    return React.createElement("span", { className: "button-inner" }, btn.title);
+                return React.createElement("span", { className: "button-inner" },
+                    React.createElement("i", { className: klass }),
+                    btn.title);
+            };
+            ToolButton.buttonSelector = "div.tool-button";
+            ToolButton = ToolButton_1 = __decorate([
+                Serenity.Decorators.registerClass("Serenity.UI.ToolButton")
+            ], ToolButton);
+            return ToolButton;
+            var ToolButton_1;
+        }(React.Component));
+        UI.ToolButton = ToolButton;
+        var IntraToolbar = /** @class */ (function (_super) {
+            __extends(IntraToolbar, _super);
+            function IntraToolbar() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            IntraToolbar.prototype.setupMouseTrap = function () {
+                var _this = this;
+                if (!window['Mousetrap'])
+                    return;
+                var buttons;
+                for (var _i = 0, _a = this.props.buttons || []; _i < _a.length; _i++) {
+                    var b = _a[_i];
+                    if (Q.isEmptyOrNull(b.hotkey))
+                        continue;
+                    this.mouseTrap = this.mouseTrap || window['Mousetrap'](this.props.hotkeyContext || window.document.documentElement);
+                    (function (x) {
+                        var btn = (buttons = buttons || $(_this.el).find(UI.ToolButton.buttonSelector))
+                            .filter("." + x.cssClass);
+                        _this.mouseTrap.bind(x.hotkey, function (e, action) {
+                            if (btn.is(':visible')) {
+                                btn.click();
+                            }
+                            return x.hotkeyAllowDefault;
+                        });
+                    })(b);
+                }
+            };
+            IntraToolbar.prototype.componentDidMount = function () {
+                this.setupMouseTrap();
+            };
+            IntraToolbar.prototype.componentWillUnmount = function () {
+                $(this.el).find(UI.ToolButton.buttonSelector).unbind('click');
+                if (this.mouseTrap) {
+                    if (!!this.mouseTrap.destroy) {
+                        this.mouseTrap.destroy();
+                    }
+                    else {
+                        this.mouseTrap.reset();
+                    }
+                    this.mouseTrap = null;
+                }
+            };
+            IntraToolbar.prototype.render = function () {
+                var _this = this;
+                return (React.createElement("div", { className: "tool-buttons", ref: function (el) { return _this.el = el; } },
+                    React.createElement("div", { className: "buttons-outer" }, this.renderButtons(this.props.buttons))));
+            };
+            IntraToolbar.prototype.renderButtons = function (buttons) {
+                var result = [];
+                for (var _i = 0, buttons_1 = buttons; _i < buttons_1.length; _i++) {
+                    var btn = buttons_1[_i];
+                    if (btn.separator)
+                        result.push(React.createElement("div", { className: "separator", key: result.length }));
+                    result.push(React.createElement(UI.ToolButton, __assign({}, btn, { key: result.length })));
+                }
+                var key = 0;
+                return (React.createElement("div", { className: "buttons-inner" },
+                    result.map(function (x) { x.key = ++key; return x; }),
+                    this.props.children));
+            };
+            return IntraToolbar;
+        }(React.Component));
+        UI.IntraToolbar = IntraToolbar;
+        var Toolbar = /** @class */ (function (_super) {
+            __extends(Toolbar, _super);
+            function Toolbar() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            Toolbar.prototype.render = function () {
+                return (React.createElement("div", { className: "s-Toolbar clearfix" }, _super.prototype.render));
+            };
+            Toolbar = __decorate([
+                Serenity.Decorators.registerClass("Serenity.UI.Toolbar")
+            ], Toolbar);
+            return Toolbar;
+        }(IntraToolbar));
+        UI.Toolbar = Toolbar;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
 })(Serenity || (Serenity = {}));
 var Serenity;
 (function (Serenity) {
@@ -10549,154 +10985,12 @@ var Serenity;
 })(Serenity || (Serenity = {}));
 var Serenity;
 (function (Serenity) {
-    var InterUI;
-    (function (InterUI) {
-        var Toolbar = /** @class */ (function (_super) {
-            __extends(Toolbar, _super);
-            function Toolbar() {
-                return _super !== null && _super.apply(this, arguments) || this;
-            }
-            Toolbar.prototype.setupMouseTrap = function () {
-                var _this = this;
-                if (!window['Mousetrap'])
-                    return;
-                var buttons;
-                for (var _i = 0, _a = this.props.buttons || []; _i < _a.length; _i++) {
-                    var b = _a[_i];
-                    if (Q.isEmptyOrNull(b.hotkey))
-                        continue;
-                    this.mouseTrap = this.mouseTrap || window['Mousetrap'](this.props.hotkeyContext || window.document.documentElement);
-                    (function (x) {
-                        var btn = (buttons = buttons || $(_this.el).find(UI.ToolButton.buttonSelector))
-                            .filter("." + x.cssClass);
-                        _this.mouseTrap.bind(x.hotkey, function (e, action) {
-                            if (btn.is(':visible')) {
-                                btn.click();
-                            }
-                            return x.hotkeyAllowDefault;
-                        });
-                    })(b);
-                }
-            };
-            Toolbar.prototype.componentDidMount = function () {
-                this.setupMouseTrap();
-            };
-            Toolbar.prototype.componentWillUnmount = function () {
-                $(this.el).find(UI.ToolButton.buttonSelector).unbind('click');
-                if (this.mouseTrap) {
-                    if (!!this.mouseTrap.destroy) {
-                        this.mouseTrap.destroy();
-                    }
-                    else {
-                        this.mouseTrap.reset();
-                    }
-                    this.mouseTrap = null;
-                }
-            };
-            Toolbar.prototype.render = function () {
-                var _this = this;
-                return (React.createElement("div", { className: "tool-buttons", ref: function (el) { return _this.el = el; } },
-                    React.createElement("div", { className: "buttons-outer" }, this.renderButtons(this.props.buttons))));
-            };
-            Toolbar.prototype.renderButtons = function (buttons) {
-                var result = [];
-                for (var _i = 0, buttons_1 = buttons; _i < buttons_1.length; _i++) {
-                    var btn = buttons_1[_i];
-                    if (btn.separator)
-                        result.push(React.createElement("div", { className: "separator", key: result.length }));
-                    result.push(React.createElement(UI.ToolButton, __assign({}, btn, { key: result.length })));
-                }
-                var key = 0;
-                return (React.createElement("div", { className: "buttons-inner" },
-                    result.map(function (x) { x.key = ++key; return x; }),
-                    this.props.children));
-            };
-            return Toolbar;
-        }(React.Component));
-        InterUI.Toolbar = Toolbar;
-    })(InterUI = Serenity.InterUI || (Serenity.InterUI = {}));
-    var UI;
-    (function (UI) {
-        var ToolButton = /** @class */ (function (_super) {
-            __extends(ToolButton, _super);
-            function ToolButton() {
-                return _super !== null && _super.apply(this, arguments) || this;
-            }
-            ToolButton_1 = ToolButton;
-            ToolButton.adjustIconClass = function (icon) {
-                if (!icon)
-                    return icon;
-                if (Q.startsWith(icon, 'fa-'))
-                    return 'fa ' + icon;
-                if (Q.startsWith(icon, 'glyphicon-'))
-                    return 'glyphicon ' + icon;
-                return icon;
-            };
-            ToolButton.className = function (btn) {
-                return Q.cssClass((_a = {
-                        "tool-button": true,
-                        "icon-tool-button": !!btn.icon,
-                        "no-text": !btn.title,
-                        disabled: btn.disabled
-                    },
-                    _a[btn.cssClass] = !!btn.cssClass,
-                    _a));
-                var _a;
-            };
-            ToolButton.prototype.handleClick = function (e) {
-                if (!this.props.onClick || $(e.currentTarget).hasClass('disabled'))
-                    return;
-                this.props.onClick(e);
-            };
-            ToolButton.prototype.render = function () {
-                var _this = this;
-                return (React.createElement("div", { className: ToolButton_1.className(this.props), title: this.props.hint, onClick: function (e) { return _this.handleClick(e); } },
-                    React.createElement("div", { className: "button-outer" }, this.renderButtonText())));
-            };
-            ToolButton.prototype.renderButtonText = function () {
-                var btn = this.props;
-                var klass = ToolButton_1.adjustIconClass(btn.icon);
-                if (!klass && !btn.title)
-                    return React.createElement("span", { className: "button-inner" });
-                if (!btn.htmlEncode) {
-                    var h = (klass ? '<i class="' + Q.attrEncode(klass) + '"></i> ' : '') + btn.title;
-                    return (React.createElement("span", { className: "button-inner", dangerouslySetInnerHTML: { __html: h } }));
-                }
-                if (!klass)
-                    return React.createElement("span", { className: "button-inner" }, btn.title);
-                return React.createElement("span", { className: "button-inner" },
-                    React.createElement("i", { className: klass }),
-                    btn.title);
-            };
-            ToolButton.buttonSelector = "div.tool-button";
-            ToolButton = ToolButton_1 = __decorate([
-                Serenity.Decorators.registerClass("Serenity.UI.ToolButton")
-            ], ToolButton);
-            return ToolButton;
-            var ToolButton_1;
-        }(React.Component));
-        UI.ToolButton = ToolButton;
-        var Toolbar = /** @class */ (function (_super) {
-            __extends(Toolbar, _super);
-            function Toolbar() {
-                return _super !== null && _super.apply(this, arguments) || this;
-            }
-            Toolbar.prototype.render = function () {
-                return (React.createElement("div", { className: "s-Toolbar clearfix" }, _super.prototype.render));
-            };
-            Toolbar = __decorate([
-                Serenity.Decorators.registerClass("Serenity.UI.Toolbar")
-            ], Toolbar);
-            return Toolbar;
-        }(InterUI.Toolbar));
-        UI.Toolbar = Toolbar;
-    })(UI = Serenity.UI || (Serenity.UI = {}));
     var Toolbar = /** @class */ (function (_super) {
         __extends(Toolbar, _super);
         function Toolbar(div, options) {
             var _this = _super.call(this, div, options) || this;
             if (div.length) {
-                _this.toolbar = ReactDOM.render(React.createElement(InterUI.Toolbar, options), div[0]);
+                _this.toolbar = ReactDOM.render(React.createElement(Serenity.UI.IntraToolbar, options), div[0]);
             }
             return _this;
         }
@@ -10714,7 +11008,7 @@ var Serenity;
             if (className != null && Q.startsWith(className, '.')) {
                 className = className.substr(1);
             }
-            return $(UI.ToolButton.buttonSelector + '.' + className, this.element);
+            return $(Serenity.UI.ToolButton.buttonSelector + '.' + className, this.element);
         };
         Toolbar = __decorate([
             Serenity.Decorators.registerClass('Serenity.Toolbar')

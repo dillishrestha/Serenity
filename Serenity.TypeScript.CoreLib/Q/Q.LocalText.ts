@@ -15,6 +15,33 @@ namespace Q {
         }
     }
 
+    export function prefixedText(prefix: string) {
+
+        return function (text: string, key: string | ((p?: string) => string)) {
+
+            if (text != null && !Q.startsWith(text, '`')) {
+                var local = Q.tryGetText(text);
+                if (local != null) {
+                    return local;
+                }
+            }
+
+            if (text != null && Q.startsWith(text, '`')) {
+                text = text.substr(1);
+            }
+
+            if (!Q.isEmptyOrNull(prefix)) {
+                var textKey = typeof (key) == "function" ? key(prefix) : (prefix + key);
+                var localText = Q.tryGetText(textKey);
+                if (localText != null) {
+                    return localText;
+                }
+            }
+
+            return text;
+        }
+    }
+
     export function tryGetText(key: string): string {
         return LT.$table[key];
     }

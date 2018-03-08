@@ -477,6 +477,10 @@ declare namespace Q {
      */
     function toGrouping<TItem>(items: TItem[], getKey: (x: TItem) => any): Q.Grouping<TItem>;
     /**
+     * Maps an array into custom groups
+     */
+    function createGroups<TItem, TGroup>(items: TItem[], getKey: (x: TItem) => any, action: (key: any, index: number, items: TItem[]) => TGroup, sortByKey?: boolean): TGroup[];
+    /**
      * Gets first element in an array that matches given predicate.
      * Returns null if no match is found.
      */
@@ -522,6 +526,7 @@ declare namespace Q {
 declare namespace Q {
     function text(key: string): string;
     function dbText(prefix: string): ((key: string) => string);
+    function prefixedText(prefix: string): (text: string, key: string | ((p?: string) => string)) => string;
     function tryGetText(key: string): string;
     function dbTryText(prefix: string): ((key: string) => string);
     class LT {
@@ -981,6 +986,142 @@ declare namespace Serenity {
         function paren(c: any[]): any[];
         function and(c1: any[], c2: any[], ...rest: any[][]): any[];
         function or(c1: any[], c2: any[], ...rest: any[][]): any[];
+    }
+}
+declare namespace Serenity.UI {
+    interface LabelProps {
+        hint?: string;
+        htmlFor?: string;
+        width?: string | number;
+        required?: boolean;
+    }
+    class Label extends React.Component<LabelProps> {
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity.UI {
+    class ValidationMark extends React.Component {
+        render(): JSX.Element;
+        shouldComponentUpdate(): boolean;
+    }
+}
+declare namespace Serenity.UI {
+    type EditorRenderProps = {
+        name?: string;
+        id?: string;
+        required?: boolean;
+    };
+    interface FieldProps {
+        name?: string;
+        id?: string;
+        className?: string;
+        caption?: string | false;
+        labelWidth?: number | string;
+        label?: ((p: LabelProps) => JSX.Element);
+        htmlFor?: string;
+        editor?: ((p: EditorRenderProps) => JSX.Element);
+        hint?: string;
+        required?: boolean;
+        vx?: boolean;
+    }
+    class Field extends React.Component<FieldProps> {
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity.UI {
+    interface PropertyFieldProps extends Serenity.PropertyItem {
+        idPrefix?: string;
+        localTextPrefix?: string;
+    }
+    class PropertyField extends React.Component<PropertyFieldProps> {
+        protected text: (text: string, key: string | ((p?: string) => string)) => string;
+        getCaption(): string;
+        getHint(): string;
+        getPlaceHolder(): string;
+        getClassName(): string;
+        getHtmlFor(editorType: any): null;
+        getEditorType(): any;
+        getEditorId(): string;
+        getMaxLength(): number;
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity.UI {
+    interface CategoryProps {
+        categoryId?: string;
+        category?: string;
+        idPrefix?: string;
+        localTextPrefix?: string;
+        items?: Serenity.PropertyItem[];
+    }
+    class Category extends React.Component<CategoryProps> {
+        renderBreak(formClass: string): JSX.Element;
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity.UI {
+    type ValidateFormProps = {
+        options?: JQueryValidation.ValidationOptions;
+    } & React.HTMLAttributes<HTMLFormElement>;
+    class ValidateForm extends React.Component<ValidateFormProps> {
+        private validator;
+        private form;
+        render(): JSX.Element;
+        handleSubmit(e: React.FormEvent<HTMLFormElement>): void;
+        componentDidMount(): void;
+        validateForm(): boolean;
+        serialize(): any;
+    }
+}
+declare namespace Serenity.UI {
+    class Form extends ValidateForm {
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity.UI {
+    class ButtonPanel extends React.Component {
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity {
+    interface ToolButton {
+        title?: string;
+        hint?: string;
+        cssClass?: string;
+        icon?: string;
+        onClick?: any;
+        htmlEncode?: any;
+        hotkey?: string;
+        hotkeyAllowDefault?: boolean;
+        hotkeyContext?: any;
+        separator?: boolean;
+        disabled?: boolean;
+    }
+    interface ToolbarOptions {
+        buttons?: ToolButton[];
+        hotkeyContext?: any;
+    }
+    namespace UI {
+        class ToolButton extends React.Component<Serenity.ToolButton> {
+            static buttonSelector: string;
+            static adjustIconClass(icon: string): string;
+            static className(btn: Serenity.ToolButton): string;
+            handleClick(e: React.MouseEvent<any>): void;
+            render(): JSX.Element;
+            renderButtonText(): JSX.Element;
+        }
+        class IntraToolbar extends React.Component<Serenity.ToolbarOptions> {
+            el: Element;
+            protected mouseTrap: any;
+            setupMouseTrap(): void;
+            componentDidMount(): void;
+            componentWillUnmount(): void;
+            render(): JSX.Element;
+            renderButtons(buttons: Serenity.ToolButton[]): JSX.Element;
+        }
+        class Toolbar extends IntraToolbar {
+            render(): JSX.Element;
+        }
     }
 }
 declare namespace Serenity {
@@ -2251,49 +2392,8 @@ declare namespace Serenity {
     }
 }
 declare namespace Serenity {
-    interface ToolButton {
-        title?: string;
-        hint?: string;
-        cssClass?: string;
-        icon?: string;
-        onClick?: any;
-        htmlEncode?: any;
-        hotkey?: string;
-        hotkeyAllowDefault?: boolean;
-        hotkeyContext?: any;
-        separator?: boolean;
-        disabled?: boolean;
-    }
-    interface ToolbarOptions {
-        buttons?: ToolButton[];
-        hotkeyContext?: any;
-    }
-    namespace InterUI {
-        class Toolbar extends React.Component<Serenity.ToolbarOptions> {
-            el: Element;
-            protected mouseTrap: any;
-            setupMouseTrap(): void;
-            componentDidMount(): void;
-            componentWillUnmount(): void;
-            render(): JSX.Element;
-            renderButtons(buttons: ToolButton[]): JSX.Element;
-        }
-    }
-    namespace UI {
-        class ToolButton extends React.Component<Serenity.ToolButton> {
-            static buttonSelector: string;
-            static adjustIconClass(icon: string): string;
-            static className(btn: Serenity.ToolButton): string;
-            handleClick(e: React.MouseEvent<any>): void;
-            render(): JSX.Element;
-            renderButtonText(): JSX.Element;
-        }
-        class Toolbar extends InterUI.Toolbar {
-            render(): JSX.Element;
-        }
-    }
     class Toolbar extends Widget<ToolbarOptions> {
-        protected toolbar: InterUI.Toolbar;
+        protected toolbar: UI.IntraToolbar;
         constructor(div: JQuery, options: ToolbarOptions);
         destroy(): void;
         findButton(className: string): JQuery;
