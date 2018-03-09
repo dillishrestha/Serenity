@@ -13,7 +13,7 @@
         protected text = Q.prefixedText(this.props.localTextPrefix);
 
         render() {
-            var groups = Categories.groupItems(this.props.items);
+            var groups = Categories.groupByCategory(this.props.items);
 
             return (
                 <div className="category-links">

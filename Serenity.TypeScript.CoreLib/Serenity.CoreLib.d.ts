@@ -3480,7 +3480,7 @@ declare namespace Serenity.UI {
     }
     class Categories extends React.Component<CategoriesProps> {
         static applyOrder(groups: Q.Groups<Serenity.PropertyItem>, categoryOrder: string): void;
-        static groupItems(items: PropertyItem[], defaultCategory?: string, categoryOrder?: string): Q.Groups<PropertyItem>;
+        static groupByCategory(items: PropertyItem[], defaultCategory?: string, categoryOrder?: string): Q.Groups<PropertyItem>;
         render(): JSX.Element;
     }
 }
@@ -3511,6 +3511,8 @@ declare namespace Serenity.UI {
         onClick?: React.EventHandler<any>;
     }
     class CategoryLink extends React.Component<CategoryLinkProps> {
+        handleClick(e: React.MouseEvent<any>): void;
+        getLink(): string;
         render(): JSX.Element;
     }
 }
@@ -3524,6 +3526,24 @@ declare namespace Serenity.UI {
     }
     class CategoryLinks extends React.Component<CategoryLinksProps> {
         protected text: (text: string, key: string | ((p?: string) => string)) => string;
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity.UI {
+    interface PropertyTabProps {
+        idPrefix?: string;
+        items?: Serenity.PropertyItem[];
+        localTextPrefix?: string;
+        categoryOrder?: string;
+        defaultCategory?: string;
+        renderContent?: (tab: string, props: CategoriesProps) => React.ReactNode;
+    }
+    class PropertyTabs extends React.Component<PropertyTabProps> {
+        protected text: (text: string, key: string | ((p?: string) => string)) => string;
+        static groupByTab(items: PropertyItem[]): Q.Groups<PropertyItem>;
+        renderTab(group: Q.Group<PropertyItem>): JSX.Element;
+        renderPane(group: Q.Group<PropertyItem>): JSX.Element;
+        renderContent(group: Q.Group<PropertyItem>): {};
         render(): JSX.Element;
     }
 }

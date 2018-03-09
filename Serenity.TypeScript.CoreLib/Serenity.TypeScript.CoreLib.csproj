@@ -56,8 +56,12 @@
     <TypeScriptCompile Include="Q\Q.React.ts" />
     <TypeScriptCompile Include="ReactUI\ButtonPanel.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\Categories.tsx" />
+    <TypeScriptCompile Include="ReactUI\Forms\CategoryLinks.tsx" />
+    <TypeScriptCompile Include="ReactUI\Forms\CategoryLink.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\CategoryTitle.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\Category.tsx" />
+    <TypeScriptCompile Include="ReactUI\Forms\CategoryLineBreak.tsx" />
+    <TypeScriptCompile Include="ReactUI\Forms\PropertyTabs.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\PropertyField.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\Form.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\Field.tsx" />

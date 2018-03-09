@@ -41,7 +41,7 @@
                 groups.inOrder[order].order = order;
         }
 
-        static groupItems(items: PropertyItem[], defaultCategory?: string, categoryOrder?: string): Q.Groups<PropertyItem> {
+        static groupByCategory(items: PropertyItem[], defaultCategory?: string, categoryOrder?: string): Q.Groups<PropertyItem> {
             var defCat = Q.coalesce(defaultCategory, '');
             var groups = Q.groupBy(items || [], x => Q.coalesce(x.category, defCat));
             Categories.applyOrder(groups, categoryOrder);
@@ -51,12 +51,14 @@
         render() {
             return (
                 <div className="categories">
-                    {Categories.groupItems(this.props.items || [], this.props.defaultCategory, this.props.categoryOrder).inOrder.map(g => {
-                        <Category categoryId={"Category" + g.order} category={g.key}
-                            idPrefix={this.props.idPrefix}
-                            localTextPrefix={this.props.localTextPrefix}
-                            items={g.items} />
-                    })}
+                    {Categories.groupByCategory(this.props.items || [],
+                        this.props.defaultCategory, this.props.categoryOrder).inOrder.map(g => (
+                            <Category categoryId={"Category" + g.order} category={g.key}
+                                idPrefix={this.props.idPrefix}
+                                localTextPrefix={this.props.localTextPrefix}
+                                items={g.items}
+                                key={g.order} />
+                    ))}
                 </div>
             )
         }

@@ -94,7 +94,7 @@
                     return;
 
                 var buttons;
-                for (var b of this.props.buttons || []) {
+                for (var b of (this.props.buttons || [])) {
                     if (Q.isEmptyOrNull(b.hotkey))
                         continue;
 
@@ -137,7 +137,8 @@
                 return (
                     <div className="tool-buttons" ref={el => this.el = el}>
                         <div className="buttons-outer">
-                            {this.renderButtons(this.props.buttons)}
+                            {this.renderButtons(this.props.buttons || [])}
+                            {this.props.children}
                         </div>
                     </div>
                 );
@@ -165,7 +166,7 @@
             render() {
                 return (
                     <div className="s-Toolbar clearfix">
-                        {super.render}
+                        {super.render()}
                     </div>
                 );
             }

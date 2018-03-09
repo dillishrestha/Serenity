@@ -3636,7 +3636,7 @@ var Serenity;
                 if (!window['Mousetrap'])
                     return;
                 var buttons;
-                for (var _i = 0, _a = this.props.buttons || []; _i < _a.length; _i++) {
+                for (var _i = 0, _a = (this.props.buttons || []); _i < _a.length; _i++) {
                     var b = _a[_i];
                     if (Q.isEmptyOrNull(b.hotkey))
                         continue;
@@ -3671,7 +3671,9 @@ var Serenity;
             IntraToolbar.prototype.render = function () {
                 var _this = this;
                 return (React.createElement("div", { className: "tool-buttons", ref: function (el) { return _this.el = el; } },
-                    React.createElement("div", { className: "buttons-outer" }, this.renderButtons(this.props.buttons))));
+                    React.createElement("div", { className: "buttons-outer" },
+                        this.renderButtons(this.props.buttons || []),
+                        this.props.children)));
             };
             IntraToolbar.prototype.renderButtons = function (buttons) {
                 var result = [];
@@ -3695,7 +3697,7 @@ var Serenity;
                 return _super !== null && _super.apply(this, arguments) || this;
             }
             Toolbar.prototype.render = function () {
-                return (React.createElement("div", { className: "s-Toolbar clearfix" }, _super.prototype.render));
+                return (React.createElement("div", { className: "s-Toolbar clearfix" }, _super.prototype.render.call(this)));
             };
             Toolbar = __decorate([
                 Serenity.Decorators.registerClass("Serenity.UI.Toolbar")
@@ -17483,7 +17485,7 @@ var Serenity;
                 for (order = 0; order < groups.inOrder.length; order++)
                     groups.inOrder[order].order = order;
             };
-            Categories.groupItems = function (items, defaultCategory, categoryOrder) {
+            Categories.groupByCategory = function (items, defaultCategory, categoryOrder) {
                 var defCat = Q.coalesce(defaultCategory, '');
                 var groups = Q.groupBy(items || [], function (x) { return Q.coalesce(x.category, defCat); });
                 Categories.applyOrder(groups, categoryOrder);
@@ -17491,9 +17493,7 @@ var Serenity;
             };
             Categories.prototype.render = function () {
                 var _this = this;
-                return (React.createElement("div", { className: "categories" }, Categories.groupItems(this.props.items || [], this.props.defaultCategory, this.props.categoryOrder).inOrder.map(function (g) {
-                    React.createElement(UI.Category, { categoryId: "Category" + g.order, category: g.key, idPrefix: _this.props.idPrefix, localTextPrefix: _this.props.localTextPrefix, items: g.items });
-                })));
+                return (React.createElement("div", { className: "categories" }, Categories.groupByCategory(this.props.items || [], this.props.defaultCategory, this.props.categoryOrder).inOrder.map(function (g) { return (React.createElement(UI.Category, { categoryId: "Category" + g.order, category: g.key, idPrefix: _this.props.idPrefix, localTextPrefix: _this.props.localTextPrefix, items: g.items, key: g.order })); })));
             };
             return Categories;
         }(React.Component));
@@ -17563,8 +17563,40 @@ var Serenity;
             function CategoryLink() {
                 return _super !== null && _super.apply(this, arguments) || this;
             }
+            CategoryLink.prototype.handleClick = function (e) {
+                e.preventDefault();
+                this.props.onClick && this.props.onClick(e);
+                var title = $('a[id=' + this.props.categoryId + ']');
+                var category = title.closest('.category');
+                if (category.hasClass('collapsed'))
+                    category.children('.category-title').click();
+                if (!title && !title.fadeTo)
+                    return;
+                var animate = function () {
+                    title.fadeTo(100, 0.5, function () {
+                        title.fadeTo(100, 1, function () {
+                        });
+                    });
+                };
+                if (category.closest(':scrollable(both)').length === 0)
+                    animate();
+                else {
+                    var siv = category.scrollintoview;
+                    siv && siv.scrollintoview({
+                        duration: 'fast',
+                        direction: 'y',
+                        complete: animate
+                    });
+                }
+            };
+            CategoryLink.prototype.getLink = function () {
+                if (Q.isEmptyOrNull(this.props.categoryId))
+                    return null;
+                return "#" + this.props.categoryId;
+            };
             CategoryLink.prototype.render = function () {
-                return (React.createElement("a", { className: "category-link", tabIndex: -1, onClick: this.props.onClick, href: this.props.categoryId == null ? null : ('#' + this.props.categoryId) }, this.props.children));
+                var _this = this;
+                return (React.createElement("a", { className: "category-link", tabIndex: -1, onClick: function (e) { return _this.handleClick(e); }, href: this.getLink() }, this.props.children));
             };
             return CategoryLink;
         }(React.Component));
@@ -17584,7 +17616,7 @@ var Serenity;
             }
             CategoryLinks.prototype.render = function () {
                 var _this = this;
-                var groups = UI.Categories.groupItems(this.props.items);
+                var groups = UI.Categories.groupByCategory(this.props.items);
                 return (React.createElement("div", { className: "category-links" }, groups.inOrder.map(function (g, idx) { return [
                     React.createElement(UI.CategoryLink, { categoryId: "Category" + g.order }, _this.text(g.key, "Categories." + g.key))
                 ]; })));
@@ -17592,6 +17624,54 @@ var Serenity;
             return CategoryLinks;
         }(React.Component));
         UI.CategoryLinks = CategoryLinks;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var PropertyTabs = /** @class */ (function (_super) {
+            __extends(PropertyTabs, _super);
+            function PropertyTabs() {
+                var _this = _super !== null && _super.apply(this, arguments) || this;
+                _this.text = Q.prefixedText(_this.props.localTextPrefix);
+                return _this;
+            }
+            PropertyTabs.groupByTab = function (items) {
+                return Q.groupBy(items || [], function (x) { return Q.coalesce(x.tab, ''); });
+            };
+            PropertyTabs.prototype.renderTab = function (group) {
+                return (React.createElement("li", { className: group.order == 0 ? "active" : null, key: group.order },
+                    React.createElement("a", { "data-toggle": 'tab', role: 'tab', href: "#" + this.props.idPrefix + "_Tab" + group.order }, this.text(group.key, "Tabs." + group.key))));
+            };
+            PropertyTabs.prototype.renderPane = function (group) {
+                return (React.createElement("div", { id: this.props.idPrefix + "_Tab" + group.order, key: group.order, className: "tab-pane fade" + (group.order == 0 ? " in active" : ""), role: "tabpanel" }, this.renderContent(group)));
+            };
+            PropertyTabs.prototype.renderContent = function (group) {
+                var props = {
+                    items: group.items,
+                    idPrefix: this.props.idPrefix,
+                    localTextPrefix: this.props.localTextPrefix,
+                    categoryOrder: this.props.categoryOrder,
+                    defaultCategory: this.props.defaultCategory
+                };
+                if (this.props.renderContent) {
+                    var content = this.props.renderContent(group.key, props);
+                    if (content !== undefined)
+                        return content;
+                }
+                return React.createElement(UI.Categories, __assign({}, props));
+            };
+            PropertyTabs.prototype.render = function () {
+                var _this = this;
+                var tabs = PropertyTabs.groupByTab(this.props.items || []);
+                return (React.createElement(React.Fragment, null,
+                    React.createElement("ul", { className: "nav nav-tabs property-tabs", role: "tablist" }, tabs.inOrder.map(function (g) { return _this.renderTab(g); })),
+                    React.createElement("div", { className: "tab-content property-panes" }, tabs.inOrder.map(function (g) { return _this.renderPane(g); }))));
+            };
+            return PropertyTabs;
+        }(React.Component));
+        UI.PropertyTabs = PropertyTabs;
     })(UI = Serenity.UI || (Serenity.UI = {}));
 })(Serenity || (Serenity = {}));
 //# sourceMappingURL=Serenity.CoreLib.js.map
