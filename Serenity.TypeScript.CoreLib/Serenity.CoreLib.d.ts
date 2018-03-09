@@ -1067,6 +1067,7 @@ declare namespace Serenity.UI {
         items?: Serenity.PropertyItem[];
     }
     class Category extends React.Component<CategoryProps, Partial<CategoryProps>> {
+        protected text: (text: string, key: string | ((p?: string) => string)) => string;
         constructor(props: CategoryProps, context?: any);
         componentWillReceiveProps(nextProps: CategoryProps): void;
         getClassName(): "category " | "category collapsible collapsed" | "category collapsible";
@@ -3501,6 +3502,28 @@ declare namespace Serenity.UI {
     }
     class CategoryLineBreak extends React.Component<CategoryLineBreakProps> {
         getBreakClass(): string;
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity.UI {
+    interface CategoryLinkProps {
+        categoryId?: string;
+        onClick?: React.EventHandler<any>;
+    }
+    class CategoryLink extends React.Component<CategoryLinkProps> {
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity.UI {
+    interface CategoryLinksProps {
+        idPrefix?: string;
+        items?: Serenity.PropertyItem[];
+        defaultCategory?: string;
+        categoryOrder?: string;
+        localTextPrefix?: string;
+    }
+    class CategoryLinks extends React.Component<CategoryLinksProps> {
+        protected text: (text: string, key: string | ((p?: string) => string)) => string;
         render(): JSX.Element;
     }
 }

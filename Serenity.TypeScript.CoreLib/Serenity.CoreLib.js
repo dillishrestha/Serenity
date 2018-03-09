@@ -3426,6 +3426,7 @@ var Serenity;
             __extends(Category, _super);
             function Category(props, context) {
                 var _this = _super.call(this, props, context) || this;
+                _this.text = Q.prefixedText(_this.props.localTextPrefix);
                 _this.state = {
                     collapsed: _this.props.collapsed
                 };
@@ -3461,7 +3462,7 @@ var Serenity;
                 var _this = this;
                 if (this.props.category == null)
                     return null;
-                return (React.createElement(UI.CategoryTitle, { categoryId: this.getCategoryId(), collapsed: this.state.collapsed, onClick: function () { return _this.handleTitleClick(); } }));
+                return (React.createElement(UI.CategoryTitle, { categoryId: this.getCategoryId(), collapsed: this.state.collapsed, onClick: function () { return _this.handleTitleClick(); } }, this.text(this.props.category, "Categories." + this.props.category)));
             };
             Category.prototype.renderItem = function (item) {
                 return (React.createElement(UI.PropertyField, __assign({ idPrefix: this.props.idPrefix, localTextPrefix: this.props.localTextPrefix }, item, { key: item.name })));
@@ -17551,6 +17552,46 @@ var Serenity;
             return CategoryLineBreak;
         }(React.Component));
         UI.CategoryLineBreak = CategoryLineBreak;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var CategoryLink = /** @class */ (function (_super) {
+            __extends(CategoryLink, _super);
+            function CategoryLink() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            CategoryLink.prototype.render = function () {
+                return (React.createElement("a", { className: "category-link", tabIndex: -1, onClick: this.props.onClick, href: this.props.categoryId == null ? null : ('#' + this.props.categoryId) }, this.props.children));
+            };
+            return CategoryLink;
+        }(React.Component));
+        UI.CategoryLink = CategoryLink;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var CategoryLinks = /** @class */ (function (_super) {
+            __extends(CategoryLinks, _super);
+            function CategoryLinks() {
+                var _this = _super !== null && _super.apply(this, arguments) || this;
+                _this.text = Q.prefixedText(_this.props.localTextPrefix);
+                return _this;
+            }
+            CategoryLinks.prototype.render = function () {
+                var _this = this;
+                var groups = UI.Categories.groupItems(this.props.items);
+                return (React.createElement("div", { className: "category-links" }, groups.inOrder.map(function (g, idx) { return [
+                    React.createElement(UI.CategoryLink, { categoryId: "Category" + g.order }, _this.text(g.key, "Categories." + g.key))
+                ]; })));
+            };
+            return CategoryLinks;
+        }(React.Component));
+        UI.CategoryLinks = CategoryLinks;
     })(UI = Serenity.UI || (Serenity.UI = {}));
 })(Serenity || (Serenity = {}));
 //# sourceMappingURL=Serenity.CoreLib.js.map

@@ -11,6 +11,8 @@
 
     export class Category extends React.Component<CategoryProps, Partial<CategoryProps>> {
 
+        protected text = Q.prefixedText(this.props.localTextPrefix);
+
         constructor(props: CategoryProps, context?: any) {
             super(props, context);
 
@@ -60,7 +62,9 @@
             return (
                 <CategoryTitle categoryId={this.getCategoryId()}
                     collapsed={this.state.collapsed}
-                    onClick={() => this.handleTitleClick()} />
+                    onClick={() => this.handleTitleClick()}>
+                    {this.text(this.props.category, "Categories." + this.props.category)}
+                </CategoryTitle>
             );
         }
 
