@@ -3,47 +3,91 @@
     export interface CategoryProps {
         categoryId?: string;
         category?: string;
+        collapsed?: boolean;
         idPrefix?: string;
         localTextPrefix?: string;
         items?: Serenity.PropertyItem[];
     }
 
-    export class Category extends React.Component<CategoryProps> {
+    export class Category extends React.Component<CategoryProps, Partial<CategoryProps>> {
 
-        renderBreak(formClass: string) {
-            var breakClass = "line-break";
+        constructor(props: CategoryProps, context?: any) {
+            super(props, context);
 
-            var splitted = formClass.split(' ');
-            if (splitted.indexOf('line-break-xs') >= 0) {
-            }
-            else if (splitted.indexOf('line-break-sm') >= 0) {
-                breakClass += " hidden-xs";
-            }
-            else if (splitted.indexOf('line-break-md') >= 0) {
-                breakClass += " hidden-sm";
-            }
-            else if (splitted.indexOf('line-break-lg') >= 0) {
-                breakClass += " hidden-md";
-            }
+            this.state = {
+                collapsed: this.props.collapsed
+            };
+        }
 
-            return (<div className={breakClass} style={{ width: "100%" }}></div>)
+        componentWillReceiveProps(nextProps: CategoryProps) {
+            if (nextProps.collapsed !== this.props.collapsed) {
+                this.setState({
+                    collapsed: nextProps.collapsed
+                });
+            }
+        }
+
+        getClassName() {
+            if (this.state.collapsed == null)
+                return "category ";
+
+            if (this.state.collapsed == true)
+                return "category collapsible collapsed";
+
+            return "category collapsible";
+        }
+
+        getCategoryId() {
+            if (!this.props.categoryId)
+                return null;
+
+            return Q.coalesce(this.props.idPrefix, '') + this.props.categoryId;
+        }
+
+        handleTitleClick() {
+            if (this.state.collapsed == null)
+                return;
+
+            this.setState({
+                collapsed: !this.state.collapsed
+            });
+        }
+
+        renderTitle() {
+            if (this.props.category == null)
+                return null;
+
+            return (
+                <CategoryTitle categoryId={this.getCategoryId()}
+                    collapsed={this.state.collapsed}
+                    onClick={() => this.handleTitleClick()} />
+            );
+        }
+
+        renderItem(item: PropertyItem) {
+            return (
+                <PropertyField
+                    idPrefix={this.props.idPrefix}
+                    localTextPrefix={this.props.localTextPrefix}
+                    {...item}
+                    key={item.name} />
+            );
+        }
+
+        renderItemWithBreak(item: PropertyItem) {
+            return [<CategoryLineBreak breakClass={item.formCssClass} key={"break-" + item.name} />, this.renderItem(item)];
         }
 
         render() {
             var props = this.props;
             return (
-                <div className="category">
-                    {props.items && props.items.map(x => {
-                        if (x.formCssClass && x.formCssClass.indexOf('line-break-') >= 0) {
-                            return (
-                                <React.Fragment key={x.name}>
-                                    {this.renderBreak(x.formCssClass)}
-                                    <PropertyField {...x} />>
-                                </React.Fragment>
-                            )
-                        }
+                <div className={this.getClassName()} >
+                    {this.renderTitle()}
+                    {props.items && props.items.map(item => {
+                        if (item.formCssClass && item.formCssClass.indexOf('line-break-') >= 0)
+                            return this.renderItemWithBreak(item);
 
-                        return (<PropertyField idPrefix={props.idPrefix} localTextPrefix={props.localTextPrefix} {...x} key={x.name} />);
+                        return this.renderItem(item);
                     })}
                     {props.children}
                 </div>

@@ -476,10 +476,21 @@ declare namespace Q {
      * and values that are arrays containing elements for a particular key.
      */
     function toGrouping<TItem>(items: TItem[], getKey: (x: TItem) => any): Q.Grouping<TItem>;
+    type Group<TItem> = {
+        order: number;
+        key: string;
+        items: TItem[];
+        start: number;
+    };
+    type Groups<TItem> = {
+        byKey: Q.Dictionary<Group<TItem>>;
+        inOrder: Group<TItem>[];
+    };
     /**
-     * Maps an array into custom groups
+     * Groups an array with keys determined by specified getKey() callback.
+     * Resulting object contains group objects in order and a dictionary to access by key.
      */
-    function createGroups<TItem, TGroup>(items: TItem[], getKey: (x: TItem) => any, action: (key: any, index: number, items: TItem[]) => TGroup, sortByKey?: boolean): TGroup[];
+    function groupBy<TItem>(items: TItem[], getKey: (x: TItem) => any): Q.Groups<TItem>;
     /**
      * Gets first element in an array that matches given predicate.
      * Returns null if no match is found.
@@ -1050,12 +1061,20 @@ declare namespace Serenity.UI {
     interface CategoryProps {
         categoryId?: string;
         category?: string;
+        collapsed?: boolean;
         idPrefix?: string;
         localTextPrefix?: string;
         items?: Serenity.PropertyItem[];
     }
-    class Category extends React.Component<CategoryProps> {
-        renderBreak(formClass: string): JSX.Element;
+    class Category extends React.Component<CategoryProps, Partial<CategoryProps>> {
+        constructor(props: CategoryProps, context?: any);
+        componentWillReceiveProps(nextProps: CategoryProps): void;
+        getClassName(): "category " | "category collapsible collapsed" | "category collapsible";
+        getCategoryId(): string;
+        handleTitleClick(): void;
+        renderTitle(): JSX.Element;
+        renderItem(item: PropertyItem): JSX.Element;
+        renderItemWithBreak(item: PropertyItem): JSX.Element[];
         render(): JSX.Element;
     }
 }
@@ -3449,4 +3468,39 @@ declare namespace Serenity.DialogExtensions {
 declare namespace Serenity.DialogTypeRegistry {
     function tryGet(key: string): Function;
     function get(key: string): Function;
+}
+declare namespace Serenity.UI {
+    class CategoriesProps {
+        idPrefix?: string;
+        items?: Serenity.PropertyItem[];
+        defaultCategory?: string;
+        categoryOrder?: string;
+        localTextPrefix?: string;
+    }
+    class Categories extends React.Component<CategoriesProps> {
+        static applyOrder(groups: Q.Groups<Serenity.PropertyItem>, categoryOrder: string): void;
+        static groupItems(items: PropertyItem[], defaultCategory?: string, categoryOrder?: string): Q.Groups<PropertyItem>;
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity.UI {
+    interface CategoryTitleProps {
+        categoryId?: string;
+        collapsed?: boolean;
+        onClick?: React.EventHandler<any>;
+    }
+    class CategoryTitle extends React.Component<CategoryTitleProps> {
+        static collapsedIcon: JSX.Element;
+        static expandedIcon: JSX.Element;
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity.UI {
+    interface CategoryLineBreakProps {
+        breakClass: string;
+    }
+    class CategoryLineBreak extends React.Component<CategoryLineBreakProps> {
+        getBreakClass(): string;
+        render(): JSX.Element;
+    }
 }

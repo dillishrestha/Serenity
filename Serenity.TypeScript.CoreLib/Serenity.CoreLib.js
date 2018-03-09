@@ -168,18 +168,35 @@ var Q;
     }
     Q.toGrouping = toGrouping;
     /**
-     * Maps an array into custom groups
+     * Groups an array with keys determined by specified getKey() callback.
+     * Resulting object contains group objects in order and a dictionary to access by key.
      */
-    function createGroups(items, getKey, action, sortByKey) {
-        items = items || [];
-        if (sortByKey) {
-            items = items.slice();
-            items.sort(function (x, y) {
-                return ;
-            });
+    function groupBy(items, getKey) {
+        var result = {
+            byKey: Object.create(null),
+            inOrder: []
+        };
+        for (var index = 0; index < items.length; index++) {
+            var item = items[index];
+            var key = Q.coalesce(getKey(item), "");
+            var group = result.byKey[key];
+            if (group === undefined) {
+                group = {
+                    order: result.inOrder.length,
+                    key: key,
+                    items: [item],
+                    start: index
+                };
+                result.byKey[key] = group;
+                result.inOrder.push(group);
+            }
+            else {
+                group.items.push(item);
+            }
         }
+        return result;
     }
-    Q.createGroups = createGroups;
+    Q.groupBy = groupBy;
     /**
      * Gets first element in an array that matches given predicate.
      * Returns null if no match is found.
@@ -3392,7 +3409,9 @@ var Serenity;
             PropertyField.prototype.render = function () {
                 var _this = this;
                 var EditorType = this.getEditorType();
-                return (React.createElement(UI.Field, { className: this.getClassName(), caption: this.getCaption(), id: this.getEditorId(), labelWidth: this.props.labelWidth, htmlFor: this.getHtmlFor(EditorType), hint: this.getHint(), required: this.props.required, editor: function (ed) { return React.createElement(EditorType, __assign({}, ed, { maxlength: _this.getMaxLength() }, _this.props.editorParams, { setOptions: _this.props.editorParams })); } }));
+                return (React.createElement(UI.Field, { className: this.getClassName(), caption: this.getCaption(), id: this.getEditorId(), labelWidth: this.props.labelWidth, htmlFor: this.getHtmlFor(EditorType), hint: this.getHint(), required: this.props.required, editor: function (ed) {
+                        return React.createElement(EditorType, __assign({}, ed, { maxlength: _this.getMaxLength() }, _this.props.editorParams, { setOptions: _this.props.editorParams }));
+                    } }));
             };
             return PropertyField;
         }(React.Component));
@@ -3405,37 +3424,60 @@ var Serenity;
     (function (UI) {
         var Category = /** @class */ (function (_super) {
             __extends(Category, _super);
-            function Category() {
-                return _super !== null && _super.apply(this, arguments) || this;
+            function Category(props, context) {
+                var _this = _super.call(this, props, context) || this;
+                _this.state = {
+                    collapsed: _this.props.collapsed
+                };
+                return _this;
             }
-            Category.prototype.renderBreak = function (formClass) {
-                var breakClass = "line-break";
-                var splitted = formClass.split(' ');
-                if (splitted.indexOf('line-break-xs') >= 0) {
+            Category.prototype.componentWillReceiveProps = function (nextProps) {
+                if (nextProps.collapsed !== this.props.collapsed) {
+                    this.setState({
+                        collapsed: nextProps.collapsed
+                    });
                 }
-                else if (splitted.indexOf('line-break-sm') >= 0) {
-                    breakClass += " hidden-xs";
-                }
-                else if (splitted.indexOf('line-break-md') >= 0) {
-                    breakClass += " hidden-sm";
-                }
-                else if (splitted.indexOf('line-break-lg') >= 0) {
-                    breakClass += " hidden-md";
-                }
-                return (React.createElement("div", { className: breakClass, style: { width: "100%" } }));
+            };
+            Category.prototype.getClassName = function () {
+                if (this.state.collapsed == null)
+                    return "category ";
+                if (this.state.collapsed == true)
+                    return "category collapsible collapsed";
+                return "category collapsible";
+            };
+            Category.prototype.getCategoryId = function () {
+                if (!this.props.categoryId)
+                    return null;
+                return Q.coalesce(this.props.idPrefix, '') + this.props.categoryId;
+            };
+            Category.prototype.handleTitleClick = function () {
+                if (this.state.collapsed == null)
+                    return;
+                this.setState({
+                    collapsed: !this.state.collapsed
+                });
+            };
+            Category.prototype.renderTitle = function () {
+                var _this = this;
+                if (this.props.category == null)
+                    return null;
+                return (React.createElement(UI.CategoryTitle, { categoryId: this.getCategoryId(), collapsed: this.state.collapsed, onClick: function () { return _this.handleTitleClick(); } }));
+            };
+            Category.prototype.renderItem = function (item) {
+                return (React.createElement(UI.PropertyField, __assign({ idPrefix: this.props.idPrefix, localTextPrefix: this.props.localTextPrefix }, item, { key: item.name })));
+            };
+            Category.prototype.renderItemWithBreak = function (item) {
+                return [React.createElement(UI.CategoryLineBreak, { breakClass: item.formCssClass, key: "break-" + item.name }), this.renderItem(item)];
             };
             Category.prototype.render = function () {
                 var _this = this;
                 var props = this.props;
-                return (React.createElement("div", { className: "category" },
-                    props.items && props.items.map(function (x) {
-                        if (x.formCssClass && x.formCssClass.indexOf('line-break-') >= 0) {
-                            return (React.createElement(React.Fragment, { key: x.name },
-                                _this.renderBreak(x.formCssClass),
-                                React.createElement(UI.PropertyField, __assign({}, x)),
-                                ">"));
-                        }
-                        return (React.createElement(UI.PropertyField, __assign({ idPrefix: props.idPrefix, localTextPrefix: props.localTextPrefix }, x, { key: x.name })));
+                return (React.createElement("div", { className: this.getClassName() },
+                    this.renderTitle(),
+                    props.items && props.items.map(function (item) {
+                        if (item.formCssClass && item.formCssClass.indexOf('line-break-') >= 0)
+                            return _this.renderItemWithBreak(item);
+                        return _this.renderItem(item);
                     }),
                     props.children));
             };
@@ -17399,5 +17441,116 @@ var Serenity;
         }
         DialogTypeRegistry.get = get;
     })(DialogTypeRegistry = Serenity.DialogTypeRegistry || (Serenity.DialogTypeRegistry = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var CategoriesProps = /** @class */ (function () {
+            function CategoriesProps() {
+            }
+            return CategoriesProps;
+        }());
+        UI.CategoriesProps = CategoriesProps;
+        var Categories = /** @class */ (function (_super) {
+            __extends(Categories, _super);
+            function Categories() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            Categories.applyOrder = function (groups, categoryOrder) {
+                if (!categoryOrder)
+                    return;
+                var split = categoryOrder.split(';');
+                var order = 0;
+                var catOrder = {};
+                for (var _i = 0, split_2 = split; _i < split_2.length; _i++) {
+                    var s = split_2[_i];
+                    var x = Q.trimToNull(s);
+                    if (x == null || catOrder[x] != null)
+                        continue;
+                    catOrder[x] = order++;
+                }
+                groups.inOrder.sort(function (g1, g2) {
+                    var order1 = catOrder[g1.key];
+                    if (order1 == null)
+                        catOrder[g1.key] = catOrder = order++;
+                    var order2 = catOrder[g2.key];
+                    if (order2 == null)
+                        catOrder[g2.key] = catOrder = order++;
+                    return order1 - order2;
+                });
+                for (order = 0; order < groups.inOrder.length; order++)
+                    groups.inOrder[order].order = order;
+            };
+            Categories.groupItems = function (items, defaultCategory, categoryOrder) {
+                var defCat = Q.coalesce(defaultCategory, '');
+                var groups = Q.groupBy(items || [], function (x) { return Q.coalesce(x.category, defCat); });
+                Categories.applyOrder(groups, categoryOrder);
+                return groups;
+            };
+            Categories.prototype.render = function () {
+                var _this = this;
+                return (React.createElement("div", { className: "categories" }, Categories.groupItems(this.props.items || [], this.props.defaultCategory, this.props.categoryOrder).inOrder.map(function (g) {
+                    React.createElement(UI.Category, { categoryId: "Category" + g.order, category: g.key, idPrefix: _this.props.idPrefix, localTextPrefix: _this.props.localTextPrefix, items: g.items });
+                })));
+            };
+            return Categories;
+        }(React.Component));
+        UI.Categories = Categories;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var CategoryTitle = /** @class */ (function (_super) {
+            __extends(CategoryTitle, _super);
+            function CategoryTitle() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            CategoryTitle.prototype.render = function () {
+                return (React.createElement("div", { className: "category-title", onClick: this.props.onClick },
+                    React.createElement("a", { className: "category-anchor", id: this.props.categoryId }, this.props.children),
+                    this.props.collapsed != null && (this.props.collapsed ? CategoryTitle.collapsedIcon : CategoryTitle.expandedIcon)));
+            };
+            CategoryTitle.collapsedIcon = React.createElement("i", { className: "fa fa-plus" });
+            CategoryTitle.expandedIcon = React.createElement("i", { className: "fa fa-minus" });
+            return CategoryTitle;
+        }(React.Component));
+        UI.CategoryTitle = CategoryTitle;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var CategoryLineBreak = /** @class */ (function (_super) {
+            __extends(CategoryLineBreak, _super);
+            function CategoryLineBreak() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            CategoryLineBreak.prototype.getBreakClass = function () {
+                var breakClass = "line-break";
+                var splitted = this.props.breakClass.split(' ');
+                if (splitted.indexOf('line-break-xs') >= 0) {
+                }
+                else if (splitted.indexOf('line-break-sm') >= 0) {
+                    breakClass += " hidden-xs";
+                }
+                else if (splitted.indexOf('line-break-md') >= 0) {
+                    breakClass += " hidden-sm";
+                }
+                else if (splitted.indexOf('line-break-lg') >= 0) {
+                    breakClass += " hidden-md";
+                }
+                return breakClass;
+            };
+            CategoryLineBreak.prototype.render = function () {
+                return (React.createElement("div", { className: this.getBreakClass(), style: { width: "100%" } }));
+            };
+            return CategoryLineBreak;
+        }(React.Component));
+        UI.CategoryLineBreak = CategoryLineBreak;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
 })(Serenity || (Serenity = {}));
 //# sourceMappingURL=Serenity.CoreLib.js.map

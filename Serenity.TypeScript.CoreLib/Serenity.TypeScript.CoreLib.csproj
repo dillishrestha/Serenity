@@ -55,6 +55,8 @@
     <TypeScriptCompile Include="Imports\JQBlockUI.ts" />
     <TypeScriptCompile Include="Q\Q.React.ts" />
     <TypeScriptCompile Include="ReactUI\ButtonPanel.tsx" />
+    <TypeScriptCompile Include="ReactUI\Forms\Categories.tsx" />
+    <TypeScriptCompile Include="ReactUI\Forms\CategoryTitle.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\Category.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\PropertyField.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\Form.tsx" />

@@ -69,10 +69,13 @@
                     htmlFor={this.getHtmlFor(EditorType)}
                     hint={this.getHint()}
                     required={this.props.required}
-                    editor={ed => <EditorType {...ed}
-                        maxlength={this.getMaxLength()}
-                        {...this.props.editorParams}
-                        setOptions={this.props.editorParams} />} />
+                    editor={ed =>
+                        <EditorType {...ed}
+                            maxlength={this.getMaxLength()}
+                            {...this.props.editorParams}
+                            setOptions={this.props.editorParams} />
+                    }
+                />
             );
         }
     }
