@@ -99,8 +99,8 @@ namespace Q {
                         (node as any).placeholder = props.placeholder;
                 }
 
-                if (props.class != null)
-                    $node.addClass(props.class);
+                if (props.className != null)
+                    $node.addClass(props.className);
 
                 this.widget = new (widgetType as any)($node, props);
 

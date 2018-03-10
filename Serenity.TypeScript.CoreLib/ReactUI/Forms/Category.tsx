@@ -6,7 +6,8 @@
         collapsed?: boolean;
         idPrefix?: string;
         localTextPrefix?: string;
-        items?: Serenity.PropertyItem[];
+        items?: PropertyItem[];
+        renderField?: (props: PropertyItem) => React.ReactNode;
     }
 
     export class Category extends React.Component<CategoryProps, Partial<CategoryProps>> {
@@ -68,18 +69,24 @@
             );
         }
 
-        renderItem(item: PropertyItem) {
-            return (
-                <PropertyField
-                    idPrefix={this.props.idPrefix}
-                    localTextPrefix={this.props.localTextPrefix}
-                    {...item}
-                    key={item.name} />
-            );
+        renderField(item: PropertyItem) {
+            var props = Q.extend({
+                idPrefix: this.props.idPrefix,
+                localTextPrefix: this.props.localTextPrefix,
+                key: item.name
+            }, item);
+
+            if (this.props.renderField != null) {
+                var content = this.props.renderField(props);
+                if (content !== undefined)
+                    return content;
+            }
+
+            return React.createElement(PropertyField, props);
         }
 
-        renderItemWithBreak(item: PropertyItem) {
-            return [<CategoryLineBreak breakClass={item.formCssClass} key={"break-" + item.name} />, this.renderItem(item)];
+        renderWithBreak(item: PropertyItem) {
+            return [<CategoryLineBreak breakClass={item.formCssClass} key={"break-" + item.name} />, this.renderField(item)];
         }
 
         render() {
@@ -89,9 +96,9 @@
                     {this.renderTitle()}
                     {props.items && props.items.map(item => {
                         if (item.formCssClass && item.formCssClass.indexOf('line-break-') >= 0)
-                            return this.renderItemWithBreak(item);
+                            return this.renderWithBreak(item);
 
-                        return this.renderItem(item);
+                        return this.renderField(item);
                     })}
                     {props.children}
                 </div>

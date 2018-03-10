@@ -61,6 +61,7 @@
     <TypeScriptCompile Include="ReactUI\Forms\CategoryTitle.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\Category.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\CategoryLineBreak.tsx" />
+    <TypeScriptCompile Include="ReactUI\Forms\PropertyGrid.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\PropertyTabs.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\PropertyField.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\Form.tsx" />

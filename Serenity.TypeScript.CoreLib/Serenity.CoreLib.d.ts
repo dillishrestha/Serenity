@@ -1035,6 +1035,13 @@ declare namespace Serenity.UI {
         required?: boolean;
         vx?: boolean;
     }
+    interface EditorProps {
+        className?: string;
+        name?: string;
+        id?: string;
+        editor?: ((p: EditorRenderProps) => JSX.Element);
+        required?: boolean;
+    }
     class Field extends React.Component<FieldProps> {
         render(): JSX.Element;
     }
@@ -1058,13 +1065,60 @@ declare namespace Serenity.UI {
     }
 }
 declare namespace Serenity.UI {
+    interface CategoryTitleProps {
+        categoryId?: string;
+        collapsed?: boolean;
+        onClick?: React.EventHandler<any>;
+    }
+    class CategoryTitle extends React.Component<CategoryTitleProps> {
+        static collapsedIcon: JSX.Element;
+        static expandedIcon: JSX.Element;
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity.UI {
+    interface CategoryLineBreakProps {
+        breakClass: string;
+    }
+    class CategoryLineBreak extends React.Component<CategoryLineBreakProps> {
+        getBreakClass(): string;
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity.UI {
+    interface CategoryLinkProps {
+        categoryId?: string;
+        onClick?: React.EventHandler<any>;
+    }
+    class CategoryLink extends React.Component<CategoryLinkProps> {
+        handleClick(e: React.MouseEvent<any>): void;
+        getLink(): string;
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity.UI {
+    interface CategoryLinksProps {
+        idPrefix?: string;
+        items?: Serenity.PropertyItem[];
+        defaultCategory?: string;
+        categoryOrder?: string;
+        localTextPrefix?: string;
+    }
+    class CategoryLinks extends React.Component<CategoryLinksProps> {
+        protected text: (text: string, key: string | ((p?: string) => string)) => string;
+        renderSeparator(key: any): JSX.Element;
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity.UI {
     interface CategoryProps {
         categoryId?: string;
         category?: string;
         collapsed?: boolean;
         idPrefix?: string;
         localTextPrefix?: string;
-        items?: Serenity.PropertyItem[];
+        items?: PropertyItem[];
+        renderField?: (props: PropertyItem) => React.ReactNode;
     }
     class Category extends React.Component<CategoryProps, Partial<CategoryProps>> {
         protected text: (text: string, key: string | ((p?: string) => string)) => string;
@@ -1074,8 +1128,25 @@ declare namespace Serenity.UI {
         getCategoryId(): string;
         handleTitleClick(): void;
         renderTitle(): JSX.Element;
-        renderItem(item: PropertyItem): JSX.Element;
-        renderItemWithBreak(item: PropertyItem): JSX.Element[];
+        renderField(item: PropertyItem): {};
+        renderWithBreak(item: PropertyItem): {}[];
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity.UI {
+    class CategoriesProps {
+        idPrefix?: string;
+        items?: Serenity.PropertyItem[];
+        defaultCategory?: string;
+        categoryOrder?: string;
+        localTextPrefix?: string;
+        renderCategory?: (props: CategoryProps) => React.ReactNode;
+        renderField?: (props: PropertyItem) => React.ReactNode;
+    }
+    class Categories extends React.Component<CategoriesProps> {
+        static applyOrder(groups: Q.Groups<Serenity.PropertyItem>, categoryOrder: string): void;
+        static groupByCategory(items: PropertyItem[], defaultCategory?: string, categoryOrder?: string): Q.Groups<PropertyItem>;
+        renderCategory(group: Q.Group<PropertyItem>): {};
         render(): JSX.Element;
     }
 }
@@ -1095,6 +1166,26 @@ declare namespace Serenity.UI {
 }
 declare namespace Serenity.UI {
     class Form extends ValidateForm {
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity.UI {
+    interface PropertyTabProps {
+        idPrefix?: string;
+        items?: Serenity.PropertyItem[];
+        localTextPrefix?: string;
+        categoryOrder?: string;
+        defaultCategory?: string;
+        renderCategories?: (tab: string, props: CategoriesProps) => React.ReactNode;
+        renderCategory?: (props: CategoryProps) => React.ReactNode;
+        renderField?: (props: PropertyItem) => React.ReactNode;
+    }
+    class PropertyTabs extends React.Component<PropertyTabProps> {
+        protected text: (text: string, key: string | ((p?: string) => string)) => string;
+        static groupByTab(items: PropertyItem[]): Q.Groups<PropertyItem>;
+        renderTab(group: Q.Group<PropertyItem>): JSX.Element;
+        renderPane(group: Q.Group<PropertyItem>): JSX.Element;
+        renderCategories(group: Q.Group<PropertyItem>): {};
         render(): JSX.Element;
     }
 }
@@ -2370,13 +2461,6 @@ declare namespace Serenity {
         private items;
         constructor(div: JQuery, opt: PropertyGridOptions);
         destroy(): void;
-        private createItems(container, items);
-        private createCategoryDiv(categoriesDiv, categoryIndexes, category, collapsed);
-        private categoryLinkClick;
-        private determineText(text, getKey);
-        private createField(container, item);
-        private getCategoryOrder(items);
-        private createCategoryLinks(container, items);
         get_editors(): Widget<any>[];
         get_items(): PropertyItem[];
         get_idPrefix(): string;
@@ -2387,7 +2471,6 @@ declare namespace Serenity {
         private static setReadOnly(widget, isReadOnly);
         private static setReadonly(elements, isReadOnly);
         private static setRequired(widget, isRequired);
-        private static setMaxLength(widget, maxLength);
         load(source: any): void;
         save(target: any): void;
         private canModifyItem(item);
@@ -2397,18 +2480,6 @@ declare namespace Serenity {
     const enum PropertyGridMode {
         insert = 1,
         update = 2,
-    }
-    interface PropertyGridOptions {
-        idPrefix?: string;
-        items?: PropertyItem[];
-        useCategories?: boolean;
-        categoryOrder?: string;
-        defaultCategory?: string;
-        localTextPrefix?: string;
-        mode?: PropertyGridMode;
-    }
-    namespace PropertyItemHelper {
-        function getPropertyItemsFor(type: Function): PropertyItem[];
     }
 }
 declare namespace Serenity {
@@ -3470,80 +3541,25 @@ declare namespace Serenity.DialogTypeRegistry {
     function tryGet(key: string): Function;
     function get(key: string): Function;
 }
-declare namespace Serenity.UI {
-    class CategoriesProps {
+declare namespace Serenity {
+    interface PropertyGridOptions {
         idPrefix?: string;
-        items?: Serenity.PropertyItem[];
-        defaultCategory?: string;
-        categoryOrder?: string;
-        localTextPrefix?: string;
-    }
-    class Categories extends React.Component<CategoriesProps> {
-        static applyOrder(groups: Q.Groups<Serenity.PropertyItem>, categoryOrder: string): void;
-        static groupByCategory(items: PropertyItem[], defaultCategory?: string, categoryOrder?: string): Q.Groups<PropertyItem>;
-        render(): JSX.Element;
-    }
-}
-declare namespace Serenity.UI {
-    interface CategoryTitleProps {
-        categoryId?: string;
-        collapsed?: boolean;
-        onClick?: React.EventHandler<any>;
-    }
-    class CategoryTitle extends React.Component<CategoryTitleProps> {
-        static collapsedIcon: JSX.Element;
-        static expandedIcon: JSX.Element;
-        render(): JSX.Element;
-    }
-}
-declare namespace Serenity.UI {
-    interface CategoryLineBreakProps {
-        breakClass: string;
-    }
-    class CategoryLineBreak extends React.Component<CategoryLineBreakProps> {
-        getBreakClass(): string;
-        render(): JSX.Element;
-    }
-}
-declare namespace Serenity.UI {
-    interface CategoryLinkProps {
-        categoryId?: string;
-        onClick?: React.EventHandler<any>;
-    }
-    class CategoryLink extends React.Component<CategoryLinkProps> {
-        handleClick(e: React.MouseEvent<any>): void;
-        getLink(): string;
-        render(): JSX.Element;
-    }
-}
-declare namespace Serenity.UI {
-    interface CategoryLinksProps {
-        idPrefix?: string;
-        items?: Serenity.PropertyItem[];
-        defaultCategory?: string;
-        categoryOrder?: string;
-        localTextPrefix?: string;
-    }
-    class CategoryLinks extends React.Component<CategoryLinksProps> {
-        protected text: (text: string, key: string | ((p?: string) => string)) => string;
-        render(): JSX.Element;
-    }
-}
-declare namespace Serenity.UI {
-    interface PropertyTabProps {
-        idPrefix?: string;
-        items?: Serenity.PropertyItem[];
-        localTextPrefix?: string;
+        items?: PropertyItem[];
+        useCategories?: boolean;
         categoryOrder?: string;
         defaultCategory?: string;
-        renderContent?: (tab: string, props: CategoriesProps) => React.ReactNode;
+        localTextPrefix?: string;
+        mode?: PropertyGridMode;
+        renderCategories?: (tab: string, props: UI.CategoriesProps) => React.ReactNode;
+        renderCategory?: (props: UI.CategoryProps) => React.ReactNode;
+        renderField?: (props: PropertyItem) => React.ReactNode;
     }
-    class PropertyTabs extends React.Component<PropertyTabProps> {
-        protected text: (text: string, key: string | ((p?: string) => string)) => string;
-        static groupByTab(items: PropertyItem[]): Q.Groups<PropertyItem>;
-        renderTab(group: Q.Group<PropertyItem>): JSX.Element;
-        renderPane(group: Q.Group<PropertyItem>): JSX.Element;
-        renderContent(group: Q.Group<PropertyItem>): {};
+}
+declare namespace Serenity.UI {
+    class IntraPropertyGrid extends React.Component<PropertyGridOptions> {
+        render(): React.ReactNode;
+    }
+    class PropertyGrid extends IntraPropertyGrid {
         render(): JSX.Element;
     }
 }

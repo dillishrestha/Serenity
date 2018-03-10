@@ -19,6 +19,14 @@
         vx?: boolean;
     }
 
+    export interface EditorProps {
+        className?: string;
+        name?: string;
+        id?: string;
+        editor?: ((p: EditorRenderProps) => JSX.Element);
+        required?: boolean;
+    }
+
     export class Field extends React.Component<FieldProps> {
 
         render() {
@@ -48,10 +56,17 @@
                 className += " " + props.className;
             }
 
+            var editorProps: EditorProps = {
+                className: "editor",
+                name: this.props.name,
+                id: this.props.id,
+                required: this.props.required
+            }
+
             return (
                 <div className={className}>
                     {lblElement}
-                    {props.editor != null && props.editor(props)}
+                    {props.editor != null && props.editor(editorProps)}
                     {props.children}
                     {props.vx !== false && <ValidationMark />}
                     <div className="clear"></div>

@@ -59,6 +59,7 @@
     "ReactUI/Forms/ValidateForm.tsx",
     "ReactUI/Forms/Form.tsx",
     "ReactUI/Forms/PropertyTabs.tsx",
+    "ReactUI/Forms/PropertyGrid.tsx",
     "ReactUI/ButtonPanel.tsx",
     "ReactUI/Toolbar.tsx",
     "UI/Helpers/SlickHelpers.ts",

@@ -6,6 +6,8 @@
         defaultCategory?: string;
         categoryOrder?: string;
         localTextPrefix?: string;
+        renderCategory?: (props: CategoryProps) => React.ReactNode;
+        renderField?: (props: PropertyItem) => React.ReactNode;
     }
 
     export class Categories extends React.Component<CategoriesProps> {
@@ -48,17 +50,35 @@
             return groups;
         }
 
+        renderCategory(group: Q.Group<PropertyItem>) {
+
+            var catProps: CategoryProps & { key?: any } = {
+                categoryId: "Category" + group.order,
+                category: group.key,
+                idPrefix: this.props.idPrefix,
+                localTextPrefix: this.props.localTextPrefix,
+                items: group.items,
+                key: group.order,
+                renderField: this.props.renderField
+            };
+
+            if (this.props.renderCategory != null) {
+                var content = this.props.renderCategory(catProps);
+                if (content !== undefined)
+                    return content;
+            }
+
+            return <Category {...catProps} />
+        }
+
         render() {
+
             return (
                 <div className="categories">
                     {Categories.groupByCategory(this.props.items || [],
-                        this.props.defaultCategory, this.props.categoryOrder).inOrder.map(g => (
-                            <Category categoryId={"Category" + g.order} category={g.key}
-                                idPrefix={this.props.idPrefix}
-                                localTextPrefix={this.props.localTextPrefix}
-                                items={g.items}
-                                key={g.order} />
-                    ))}
+                        this.props.defaultCategory, this.props.categoryOrder).inOrder.map(g =>
+                            this.renderCategory(g))
+                    }
                 </div>
             )
         }

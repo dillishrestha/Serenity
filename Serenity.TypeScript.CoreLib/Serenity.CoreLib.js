@@ -2478,8 +2478,8 @@ var Q;
                     if (props.placeholder != null)
                         node.placeholder = props.placeholder;
                 }
-                if (props.class != null)
-                    $node.addClass(props.class);
+                if (props.className != null)
+                    $node.addClass(props.className);
                 this.widget = new widgetType($node, props);
                 if (props.maxLength != null)
                     node.setAttribute("maxLength", props.maxLength.toString());
@@ -3346,9 +3346,15 @@ var Serenity;
                 if (props.className) {
                     className += " " + props.className;
                 }
+                var editorProps = {
+                    className: "editor",
+                    name: this.props.name,
+                    id: this.props.id,
+                    required: this.props.required
+                };
                 return (React.createElement("div", { className: className },
                     lblElement,
-                    props.editor != null && props.editor(props),
+                    props.editor != null && props.editor(editorProps),
                     props.children,
                     props.vx !== false && React.createElement(UI.ValidationMark, null),
                     React.createElement("div", { className: "clear" })));
@@ -3409,13 +3415,143 @@ var Serenity;
             PropertyField.prototype.render = function () {
                 var _this = this;
                 var EditorType = this.getEditorType();
-                return (React.createElement(UI.Field, { className: this.getClassName(), caption: this.getCaption(), id: this.getEditorId(), labelWidth: this.props.labelWidth, htmlFor: this.getHtmlFor(EditorType), hint: this.getHint(), required: this.props.required, editor: function (ed) {
+                return (React.createElement(UI.Field, { className: this.getClassName(), caption: this.getCaption(), id: this.getEditorId(), name: this.props.name, labelWidth: this.props.labelWidth, htmlFor: this.getHtmlFor(EditorType), hint: this.getHint(), required: this.props.required, editor: function (ed) {
                         return React.createElement(EditorType, __assign({}, ed, { maxlength: _this.getMaxLength() }, _this.props.editorParams, { setOptions: _this.props.editorParams }));
-                    } }));
+                    } }, this.props.children));
             };
             return PropertyField;
         }(React.Component));
         UI.PropertyField = PropertyField;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var CategoryTitle = /** @class */ (function (_super) {
+            __extends(CategoryTitle, _super);
+            function CategoryTitle() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            CategoryTitle.prototype.render = function () {
+                return (React.createElement("div", { className: "category-title", onClick: this.props.onClick },
+                    React.createElement("a", { className: "category-anchor", id: this.props.categoryId }, this.props.children),
+                    this.props.collapsed != null && (this.props.collapsed ? CategoryTitle.collapsedIcon : CategoryTitle.expandedIcon)));
+            };
+            CategoryTitle.collapsedIcon = React.createElement("i", { className: "fa fa-plus" });
+            CategoryTitle.expandedIcon = React.createElement("i", { className: "fa fa-minus" });
+            return CategoryTitle;
+        }(React.Component));
+        UI.CategoryTitle = CategoryTitle;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var CategoryLineBreak = /** @class */ (function (_super) {
+            __extends(CategoryLineBreak, _super);
+            function CategoryLineBreak() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            CategoryLineBreak.prototype.getBreakClass = function () {
+                var breakClass = "line-break";
+                var splitted = this.props.breakClass.split(' ');
+                if (splitted.indexOf('line-break-xs') >= 0) {
+                }
+                else if (splitted.indexOf('line-break-sm') >= 0) {
+                    breakClass += " hidden-xs";
+                }
+                else if (splitted.indexOf('line-break-md') >= 0) {
+                    breakClass += " hidden-sm";
+                }
+                else if (splitted.indexOf('line-break-lg') >= 0) {
+                    breakClass += " hidden-md";
+                }
+                return breakClass;
+            };
+            CategoryLineBreak.prototype.render = function () {
+                return (React.createElement("div", { className: this.getBreakClass(), style: { width: "100%" } }));
+            };
+            return CategoryLineBreak;
+        }(React.Component));
+        UI.CategoryLineBreak = CategoryLineBreak;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var CategoryLink = /** @class */ (function (_super) {
+            __extends(CategoryLink, _super);
+            function CategoryLink() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            CategoryLink.prototype.handleClick = function (e) {
+                e.preventDefault();
+                this.props.onClick && this.props.onClick(e);
+                var title = $('a[id=' + this.props.categoryId + ']');
+                var category = title.closest('.category');
+                if (category.hasClass('collapsed'))
+                    category.children('.category-title').click();
+                if (!title && !title.fadeTo)
+                    return;
+                var animate = function () {
+                    title.fadeTo(100, 0.5, function () {
+                        title.fadeTo(100, 1, function () {
+                        });
+                    });
+                };
+                if (category.closest(':scrollable(both)').length === 0)
+                    animate();
+                else {
+                    var siv = category.scrollintoview;
+                    siv && siv.scrollintoview({
+                        duration: 'fast',
+                        direction: 'y',
+                        complete: animate
+                    });
+                }
+            };
+            CategoryLink.prototype.getLink = function () {
+                if (Q.isEmptyOrNull(this.props.categoryId))
+                    return null;
+                return "#" + this.props.categoryId;
+            };
+            CategoryLink.prototype.render = function () {
+                var _this = this;
+                return (React.createElement("a", { className: "category-link", tabIndex: -1, onClick: function (e) { return _this.handleClick(e); }, href: this.getLink() }, this.props.children));
+            };
+            return CategoryLink;
+        }(React.Component));
+        UI.CategoryLink = CategoryLink;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var CategoryLinks = /** @class */ (function (_super) {
+            __extends(CategoryLinks, _super);
+            function CategoryLinks() {
+                var _this = _super !== null && _super.apply(this, arguments) || this;
+                _this.text = Q.prefixedText(_this.props.localTextPrefix);
+                return _this;
+            }
+            CategoryLinks.prototype.renderSeparator = function (key) {
+                return React.createElement("span", { className: "separator", key: key }, "|");
+            };
+            CategoryLinks.prototype.render = function () {
+                var _this = this;
+                var groups = UI.Categories.groupByCategory(this.props.items);
+                return (React.createElement("div", { className: "category-links" }, groups.inOrder.map(function (g, idx) { return [
+                    (idx > 0 && _this.renderSeparator("sep-" + idx)),
+                    React.createElement(UI.CategoryLink, { categoryId: "Category" + g.order, key: idx }, _this.text(g.key, "Categories." + g.key))
+                ]; })));
+            };
+            return CategoryLinks;
+        }(React.Component));
+        UI.CategoryLinks = CategoryLinks;
     })(UI = Serenity.UI || (Serenity.UI = {}));
 })(Serenity || (Serenity = {}));
 var Serenity;
@@ -3464,11 +3600,21 @@ var Serenity;
                     return null;
                 return (React.createElement(UI.CategoryTitle, { categoryId: this.getCategoryId(), collapsed: this.state.collapsed, onClick: function () { return _this.handleTitleClick(); } }, this.text(this.props.category, "Categories." + this.props.category)));
             };
-            Category.prototype.renderItem = function (item) {
-                return (React.createElement(UI.PropertyField, __assign({ idPrefix: this.props.idPrefix, localTextPrefix: this.props.localTextPrefix }, item, { key: item.name })));
+            Category.prototype.renderField = function (item) {
+                var props = Q.extend({
+                    idPrefix: this.props.idPrefix,
+                    localTextPrefix: this.props.localTextPrefix,
+                    key: item.name
+                }, item);
+                if (this.props.renderField != null) {
+                    var content = this.props.renderField(props);
+                    if (content !== undefined)
+                        return content;
+                }
+                return React.createElement(UI.PropertyField, props);
             };
-            Category.prototype.renderItemWithBreak = function (item) {
-                return [React.createElement(UI.CategoryLineBreak, { breakClass: item.formCssClass, key: "break-" + item.name }), this.renderItem(item)];
+            Category.prototype.renderWithBreak = function (item) {
+                return [React.createElement(UI.CategoryLineBreak, { breakClass: item.formCssClass, key: "break-" + item.name }), this.renderField(item)];
             };
             Category.prototype.render = function () {
                 var _this = this;
@@ -3477,14 +3623,88 @@ var Serenity;
                     this.renderTitle(),
                     props.items && props.items.map(function (item) {
                         if (item.formCssClass && item.formCssClass.indexOf('line-break-') >= 0)
-                            return _this.renderItemWithBreak(item);
-                        return _this.renderItem(item);
+                            return _this.renderWithBreak(item);
+                        return _this.renderField(item);
                     }),
                     props.children));
             };
             return Category;
         }(React.Component));
         UI.Category = Category;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var CategoriesProps = /** @class */ (function () {
+            function CategoriesProps() {
+            }
+            return CategoriesProps;
+        }());
+        UI.CategoriesProps = CategoriesProps;
+        var Categories = /** @class */ (function (_super) {
+            __extends(Categories, _super);
+            function Categories() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            Categories.applyOrder = function (groups, categoryOrder) {
+                if (!categoryOrder)
+                    return;
+                var split = categoryOrder.split(';');
+                var order = 0;
+                var catOrder = {};
+                for (var _i = 0, split_1 = split; _i < split_1.length; _i++) {
+                    var s = split_1[_i];
+                    var x = Q.trimToNull(s);
+                    if (x == null || catOrder[x] != null)
+                        continue;
+                    catOrder[x] = order++;
+                }
+                groups.inOrder.sort(function (g1, g2) {
+                    var order1 = catOrder[g1.key];
+                    if (order1 == null)
+                        catOrder[g1.key] = catOrder = order++;
+                    var order2 = catOrder[g2.key];
+                    if (order2 == null)
+                        catOrder[g2.key] = catOrder = order++;
+                    return order1 - order2;
+                });
+                for (order = 0; order < groups.inOrder.length; order++)
+                    groups.inOrder[order].order = order;
+            };
+            Categories.groupByCategory = function (items, defaultCategory, categoryOrder) {
+                var defCat = Q.coalesce(defaultCategory, '');
+                var groups = Q.groupBy(items || [], function (x) { return Q.coalesce(x.category, defCat); });
+                Categories.applyOrder(groups, categoryOrder);
+                return groups;
+            };
+            Categories.prototype.renderCategory = function (group) {
+                var catProps = {
+                    categoryId: "Category" + group.order,
+                    category: group.key,
+                    idPrefix: this.props.idPrefix,
+                    localTextPrefix: this.props.localTextPrefix,
+                    items: group.items,
+                    key: group.order,
+                    renderField: this.props.renderField
+                };
+                if (this.props.renderCategory != null) {
+                    var content = this.props.renderCategory(catProps);
+                    if (content !== undefined)
+                        return content;
+                }
+                return React.createElement(UI.Category, __assign({}, catProps));
+            };
+            Categories.prototype.render = function () {
+                var _this = this;
+                return (React.createElement("div", { className: "categories" }, Categories.groupByCategory(this.props.items || [], this.props.defaultCategory, this.props.categoryOrder).inOrder.map(function (g) {
+                    return _this.renderCategory(g);
+                })));
+            };
+            return Categories;
+        }(React.Component));
+        UI.Categories = Categories;
     })(UI = Serenity.UI || (Serenity.UI = {}));
 })(Serenity || (Serenity = {}));
 var Serenity;
@@ -3544,6 +3764,56 @@ var Serenity;
             return Form;
         }(UI.ValidateForm));
         UI.Form = Form;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var PropertyTabs = /** @class */ (function (_super) {
+            __extends(PropertyTabs, _super);
+            function PropertyTabs() {
+                var _this = _super !== null && _super.apply(this, arguments) || this;
+                _this.text = Q.prefixedText(_this.props.localTextPrefix);
+                return _this;
+            }
+            PropertyTabs.groupByTab = function (items) {
+                return Q.groupBy(items || [], function (x) { return Q.coalesce(x.tab, ''); });
+            };
+            PropertyTabs.prototype.renderTab = function (group) {
+                return (React.createElement("li", { className: group.order == 0 ? "active" : null, key: group.order },
+                    React.createElement("a", { "data-toggle": 'tab', role: 'tab', href: "#" + this.props.idPrefix + "_Tab" + group.order }, this.text(group.key, "Tabs." + group.key))));
+            };
+            PropertyTabs.prototype.renderPane = function (group) {
+                return (React.createElement("div", { id: this.props.idPrefix + "_Tab" + group.order, key: group.order, className: "tab-pane fade" + (group.order == 0 ? " in active" : ""), role: "tabpanel" }, this.renderCategories(group)));
+            };
+            PropertyTabs.prototype.renderCategories = function (group) {
+                var props = {
+                    items: group.items,
+                    idPrefix: this.props.idPrefix,
+                    localTextPrefix: this.props.localTextPrefix,
+                    categoryOrder: this.props.categoryOrder,
+                    defaultCategory: this.props.defaultCategory,
+                    renderCategory: this.props.renderCategory,
+                    renderField: this.props.renderField
+                };
+                if (this.props.renderCategories) {
+                    var content = this.props.renderCategories(group.key, props);
+                    if (content !== undefined)
+                        return content;
+                }
+                return React.createElement(UI.Categories, __assign({}, props));
+            };
+            PropertyTabs.prototype.render = function () {
+                var _this = this;
+                var tabs = PropertyTabs.groupByTab(this.props.items || []);
+                return (React.createElement(React.Fragment, null,
+                    React.createElement("ul", { className: "nav nav-tabs property-tabs", role: "tablist" }, tabs.inOrder.map(function (g) { return _this.renderTab(g); })),
+                    React.createElement("div", { className: "tab-content property-panes" }, tabs.inOrder.map(function (g) { return _this.renderPane(g); }))));
+            };
+            return PropertyTabs;
+        }(React.Component));
+        UI.PropertyTabs = PropertyTabs;
     })(UI = Serenity.UI || (Serenity.UI = {}));
 })(Serenity || (Serenity = {}));
 var Serenity;
@@ -10355,375 +10625,69 @@ var Serenity;
         __extends(PropertyGrid, _super);
         function PropertyGrid(div, opt) {
             var _this = _super.call(this, div, opt) || this;
-            _this.categoryLinkClick = function (e) {
-                e.preventDefault();
-                var title = $('a[name=' + e.target.getAttribute('href')
-                    .toString().substr(1) + ']');
-                if (title.closest('.category').hasClass('collapsed'))
-                    title.closest('.category').children('.category-title').click();
-                var animate = function () {
-                    title.fadeTo(100, 0.5, function () {
-                        title.fadeTo(100, 1, function () {
-                        });
-                    });
-                };
-                var intoView = title.closest('.category');
-                if (intoView.closest(':scrollable(both)').length === 0)
-                    animate();
-                else {
-                    intoView.scrollintoview({
-                        duration: 'fast',
-                        direction: 'y',
-                        complete: animate
-                    });
-                }
-            };
             if (opt.mode == null)
                 opt.mode = 1;
             div.addClass('s-PropertyGrid');
             _this.editors = [];
             _this.items = _this.options.items || [];
-            var useTabs = Q.any(_this.items, function (x) {
-                return !Q.isEmptyOrNull(x.tab);
-            });
-            if (useTabs) {
-                var ul = $("<ul class='nav nav-tabs property-tabs' role='tablist'></ul>")
-                    .appendTo(_this.element);
-                var tc = $("<div class='tab-content property-panes'></div>")
-                    .appendTo(_this.element);
-                var tabIndex = 0;
-                var i = 0;
-                while (i < _this.items.length) {
-                    var tab = { $: Q.trimToEmpty(_this.items[i].tab) };
-                    var tabItems = [];
-                    var j = i;
-                    do {
-                        tabItems.push(_this.items[j]);
-                    } while (++j < _this.items.length &&
-                        Q.trimToEmpty(_this.items[j].tab) === tab.$);
-                    i = j;
-                    var li = $("<li><a data-toggle='tab' role='tab'></a></li>")
-                        .appendTo(ul);
-                    if (tabIndex === 0) {
-                        li.addClass('active');
+            if (div.length > 0)
+                ReactDOM.render(React.createElement(Serenity.UI.IntraPropertyGrid, _this.options), div[0]);
+            _this.element.find(".field").each(function (i, el) {
+                if ($(el).closest('.s-PropertyGrid')[0] !== _this.element[0])
+                    return;
+                var w;
+                var wrapper = $(el).find('.widget-wrapper');
+                if (wrapper.length == 1) {
+                    var ed = wrapper.children();
+                    if (ed.length > 1) {
+                        var withEdClass = ed.filter('.editor').not('.select2-container');
+                        if (withEdClass.length == 1)
+                            ed = withEdClass;
+                        else {
+                            var withName = ed.filter(function (i, e) { return !!$(e).attr('name'); });
+                            if (withName.length == 1)
+                                ed = withName;
+                        }
                     }
-                    var tabID = _this.uniqueName + '_Tab' + tabIndex;
-                    li.children('a').attr('href', '#' + tabID)
-                        .text(_this.determineText(tab.$, ss.mkdel({
-                        tab: tab
-                    }, function (prefix) {
-                        return prefix + 'Tabs.' + this.tab.$;
-                    })));
-                    var pane = $("<div class='tab-pane fade' role='tabpanel'>")
-                        .appendTo(tc);
-                    if (tabIndex === 0) {
-                        pane.addClass('in active');
+                    if (ed.length == 1) {
+                        w = ed.tryGetWidget(Serenity.Widget);
+                        if (w != null) {
+                            _this.editors.push(w);
+                            return;
+                        }
                     }
-                    pane.attr('id', tabID);
-                    _this.createItems(pane, tabItems);
-                    tabIndex++;
                 }
-            }
-            else {
-                _this.createItems(_this.element, _this.items);
-            }
+                var eds = $(el).find('.editor').not('.select2-container');
+                if (eds.length > 1) {
+                    eds = eds.filter(function (i, e) { return !!$(e).attr('name'); });
+                }
+                if (eds.length == 1) {
+                    w = eds.tryGetWidget(Serenity.Widget);
+                    if (w != null) {
+                        _this.editors.push(w);
+                        return;
+                    }
+                }
+                eds = $(el).find(':input');
+                if (eds.length == 1) {
+                    w = eds.tryGetWidget(Serenity.Widget);
+                    if (w != null) {
+                        _this.editors.push(w);
+                        return;
+                    }
+                }
+            });
             _this.updateInterface();
             return _this;
         }
-        PropertyGrid_1 = PropertyGrid;
         PropertyGrid.prototype.destroy = function () {
             if (this.editors != null) {
                 for (var i = 0; i < this.editors.length; i++) {
-                    this.editors[i].destroy();
+                    this.editors[i] != null && this.editors[i].destroy();
                 }
                 this.editors = null;
             }
-            this.element.find('a.category-link').unbind('click', this.categoryLinkClick).remove();
             Serenity.Widget.prototype.destroy.call(this);
-        };
-        PropertyGrid.prototype.createItems = function (container, items) {
-            var categoryIndexes = {};
-            var categoriesDiv = container;
-            var useCategories = this.options.useCategories !== false && Q.any(items, function (x) {
-                return !Q.isEmptyOrNull(x.category);
-            });
-            if (useCategories) {
-                var linkContainer = $('<div/>').addClass('category-links');
-                categoryIndexes = this.createCategoryLinks(linkContainer, items);
-                if (Object.keys(categoryIndexes).length > 1) {
-                    linkContainer.appendTo(container);
-                }
-                else {
-                    linkContainer.find('a.category-link').unbind('click', this.categoryLinkClick).remove();
-                }
-            }
-            categoriesDiv = $('<div/>').addClass('categories').appendTo(container);
-            var fieldContainer;
-            if (useCategories) {
-                fieldContainer = categoriesDiv;
-            }
-            else {
-                fieldContainer = $('<div/>').addClass('category').appendTo(categoriesDiv);
-            }
-            var priorCategory = null;
-            for (var i = 0; i < items.length; i++) {
-                var item = items[i];
-                var category = item.category;
-                if (category == null) {
-                    category = Q.coalesce(this.options.defaultCategory, '');
-                }
-                if (useCategories && priorCategory !== category) {
-                    var categoryDiv = this.createCategoryDiv(categoriesDiv, categoryIndexes, category, ((item.collapsible !== true) ? null :
-                        Q.coalesce(item.collapsed, false)));
-                    if (priorCategory == null) {
-                        categoryDiv.addClass('first-category');
-                    }
-                    priorCategory = category;
-                    fieldContainer = categoryDiv;
-                }
-                var editor = this.createField(fieldContainer, item);
-                this.editors.push(editor);
-            }
-        };
-        PropertyGrid.prototype.createCategoryDiv = function (categoriesDiv, categoryIndexes, category, collapsed) {
-            var categoryDiv = $('<div/>').addClass('category')
-                .appendTo(categoriesDiv);
-            var title = $('<div/>').addClass('category-title')
-                .append($('<a/>').addClass('category-anchor')
-                .text(this.determineText(category, function (prefix) {
-                return prefix + 'Categories.' + category;
-            }))
-                .attr('name', this.options.idPrefix +
-                'Category' + categoryIndexes[category].toString()))
-                .appendTo(categoryDiv);
-            if (collapsed != null) {
-                categoryDiv.addClass(((collapsed === true) ?
-                    'collapsible collapsed' : 'collapsible'));
-                var img = $('<i/>').addClass(((collapsed === true) ?
-                    'fa fa-plus' : 'fa fa-minus')).appendTo(title);
-                title.click(function (e) {
-                    categoryDiv.toggleClass('collapsed');
-                    img.toggleClass('fa-plus').toggleClass('fa-minus');
-                });
-            }
-            return categoryDiv;
-        };
-        PropertyGrid.prototype.determineText = function (text, getKey) {
-            if (text != null && !Q.startsWith(text, '`')) {
-                var local = Q.tryGetText(text);
-                if (local != null) {
-                    return local;
-                }
-            }
-            if (text != null && Q.startsWith(text, '`')) {
-                text = text.substr(1);
-            }
-            if (!Q.isEmptyOrNull(this.options.localTextPrefix)) {
-                var local1 = Q.tryGetText(getKey(this.options.localTextPrefix));
-                if (local1 != null) {
-                    return local1;
-                }
-            }
-            return text;
-        };
-        PropertyGrid.prototype.createField = function (container, item) {
-            var fieldDiv = $('<div/>').addClass('field')
-                .addClass(item.name).data('PropertyItem', item).appendTo(container);
-            if (!Q.isEmptyOrNull(item.cssClass)) {
-                fieldDiv.addClass(item.cssClass);
-            }
-            if (!Q.isEmptyOrNull(item.formCssClass)) {
-                fieldDiv.addClass(item.formCssClass);
-                if (item.formCssClass.indexOf('line-break-') >= 0) {
-                    var splitted = item.formCssClass.split(String.fromCharCode(32));
-                    if (splitted.indexOf('line-break-xs') >= 0) {
-                        $("<div class='line-break' style='width: 100%' />")
-                            .insertBefore(fieldDiv);
-                    }
-                    else if (splitted.indexOf('line-break-sm') >= 0) {
-                        $("<div class='line-break hidden-xs' style='width: 100%' />")
-                            .insertBefore(fieldDiv);
-                    }
-                    else if (splitted.indexOf('line-break-md') >= 0) {
-                        $("<div class='line-break hidden-sm' style='width: 100%' />")
-                            .insertBefore(fieldDiv);
-                    }
-                    else if (splitted.indexOf('line-break-lg') >= 0) {
-                        $("<div class='line-break hidden-md' style='width: 100%' />")
-                            .insertBefore(fieldDiv);
-                    }
-                }
-            }
-            var editorId = this.options.idPrefix + item.name;
-            var title = this.determineText(item.title, function (prefix) {
-                return prefix + item.name;
-            });
-            var hint = this.determineText(item.hint, function (prefix1) {
-                return prefix1 + item.name + '_Hint';
-            });
-            var placeHolder = this.determineText(item.placeholder, function (prefix2) {
-                return prefix2 + item.name + '_Placeholder';
-            });
-            if (hint == null) {
-                hint = Q.coalesce(title, '');
-            }
-            var label = $('<label/>')
-                .addClass('caption').attr('for', editorId)
-                .attr('title', hint).html(Q.coalesce(title, ''))
-                .appendTo(fieldDiv);
-            if (!Q.isEmptyOrNull(item.labelWidth)) {
-                if (item.labelWidth === '0') {
-                    label.hide();
-                }
-                else {
-                    label.css('width', item.labelWidth);
-                }
-            }
-            if (item.required === true) {
-                $('<sup>*</sup>').attr('title', Q.text('Controls.PropertyGrid.RequiredHint'))
-                    .prependTo(label);
-            }
-            var editorType = Serenity.EditorTypeRegistry
-                .get(Q.coalesce(item.editorType, 'String'));
-            var elementAttr = ss.getAttributes(editorType, Serenity.ElementAttribute, true);
-            var elementHtml = ((elementAttr.length > 0) ?
-                elementAttr[0].value : '<input/>');
-            var element = Serenity.Widget.elementFor(editorType)
-                .addClass('editor').addClass('flexify')
-                .attr('id', editorId).appendTo(fieldDiv);
-            if (element.is(':input')) {
-                element.attr('name', Q.coalesce(item.name, ''));
-            }
-            if (!Q.isEmptyOrNull(placeHolder)) {
-                element.attr('placeholder', placeHolder);
-            }
-            var editorParams = item.editorParams;
-            var optionsType = null;
-            var optionsAttr = ss.getAttributes(editorType, Serenity.OptionsTypeAttribute, true);
-            if (optionsAttr != null && optionsAttr.length > 0) {
-                optionsType = optionsAttr[0].optionsType;
-            }
-            var editor;
-            if (optionsType != null) {
-                editorParams = $.extend(ss.createInstance(optionsType), item.editorParams);
-                editor = new editorType(element, editorParams);
-            }
-            else {
-                editorParams = $.extend(new Object(), item.editorParams);
-                editor = new editorType(element, editorParams);
-            }
-            editor.initialize();
-            if (ss.isInstanceOfType(editor, Serenity.BooleanEditor) &&
-                (item.editorParams == null || !!!item.editorParams['labelFor'])) {
-                label.removeAttr('for');
-            }
-            if (ss.isInstanceOfType(editor, Serenity.RadioButtonEditor) &&
-                (item.editorParams == null || !!!item.editorParams['labelFor'])) {
-                label.removeAttr('for');
-            }
-            if (item.maxLength != null) {
-                PropertyGrid_1.setMaxLength(editor, item.maxLength);
-            }
-            if (item.editorParams != null) {
-                Serenity.ReflectionOptionsSetter.set(editor, item.editorParams);
-            }
-            $('<div/>').addClass('vx').appendTo(fieldDiv);
-            $('<div/>').addClass('clear').appendTo(fieldDiv);
-            return editor;
-        };
-        PropertyGrid.prototype.getCategoryOrder = function (items) {
-            var order = 0;
-            var result = {};
-            var categoryOrder = Q.trimToNull(this.options.categoryOrder);
-            if (categoryOrder != null) {
-                var split = categoryOrder.split(';');
-                for (var _i = 0, split_1 = split; _i < split_1.length; _i++) {
-                    var s = split_1[_i];
-                    var x = Q.trimToNull(s);
-                    if (x == null) {
-                        continue;
-                    }
-                    if (result[x] != null) {
-                        continue;
-                    }
-                    result[x] = order++;
-                }
-            }
-            for (var _a = 0, items_6 = items; _a < items_6.length; _a++) {
-                var x1 = items_6[_a];
-                var category = x1.category;
-                if (category == null) {
-                    category = Q.coalesce(this.options.defaultCategory, '');
-                }
-                if (result[category] == null) {
-                    result[category] = order++;
-                }
-            }
-            return result;
-        };
-        PropertyGrid.prototype.createCategoryLinks = function (container, items) {
-            var idx = 0;
-            var itemIndex = {};
-            var itemCategory = {};
-            for (var _i = 0, items_7 = items; _i < items_7.length; _i++) {
-                var x = items_7[_i];
-                var name1 = x.name;
-                var cat1 = x.category;
-                if (cat1 == null) {
-                    cat1 = Q.coalesce(this.options.defaultCategory, '');
-                }
-                itemCategory[name1] = cat1;
-                itemIndex[x.name] = idx++;
-            }
-            var self = this;
-            var categoryOrder = this.getCategoryOrder(items);
-            items.sort(function (x1, y) {
-                var c = 0;
-                var xcategory = itemCategory[x1.name];
-                var ycategory = itemCategory[y.name];
-                if (!ss.referenceEquals(xcategory, ycategory)) {
-                    var c1 = categoryOrder[xcategory];
-                    var c2 = categoryOrder[ycategory];
-                    if (c1 != null && c2 != null) {
-                        c = c1 - c2;
-                    }
-                    else if (c1 != null) {
-                        c = -1;
-                    }
-                    else if (c2 != null) {
-                        c = 1;
-                    }
-                }
-                if (c === 0) {
-                    c = ss.compareStrings(xcategory, ycategory);
-                }
-                if (c === 0) {
-                    c = ss.compare(itemIndex[x1.name], itemIndex[y.name]);
-                }
-                return c;
-            });
-            var categoryIndexes = {};
-            for (var i = 0; i < items.length; i++) {
-                var item = items[i];
-                var category = { $: itemCategory[item.name] };
-                if (categoryIndexes[category.$] == null) {
-                    var index = Object.keys(categoryIndexes).length + 1;
-                    categoryIndexes[category.$] = index;
-                    if (index > 1) {
-                        $('<span/>').addClass('separator').text('|').prependTo(container);
-                    }
-                    $('<a/>').addClass('category-link').text(this.determineText(category.$, ss.mkdel({ category: category }, function (prefix) {
-                        return prefix + 'Categories.' + this.category.$;
-                    })))
-                        .attr('tabindex', '-1')
-                        .attr('href', '#' + this.options.idPrefix +
-                        'Category' + index.toString())
-                        .click(this.categoryLinkClick)
-                        .prependTo(container);
-                }
-            }
-            $('<div/>').addClass('clear').appendTo(container);
-            return categoryIndexes;
         };
         PropertyGrid.prototype.get_editors = function () {
             return this.editors;
@@ -10762,20 +10726,12 @@ var Serenity;
         PropertyGrid.setRequired = function (widget, isRequired) {
             Serenity.EditorUtils.setRequired(widget, isRequired);
         };
-        PropertyGrid.setMaxLength = function (widget, maxLength) {
-            if (widget.element.is(':input')) {
-                if (maxLength > 0) {
-                    widget.element.attr('maxlength', maxLength);
-                }
-                else {
-                    widget.element.removeAttr('maxlength');
-                }
-            }
-        };
         PropertyGrid.prototype.load = function (source) {
             for (var i = 0; i < this.editors.length; i++) {
                 var item = this.items[i];
                 var editor = this.editors[i];
+                if (editor == null)
+                    continue;
                 if (!!(this.get_mode() === 1 && item.defaultValue != null) &&
                     typeof (source[item.name]) === 'undefined') {
                     source[item.name] = item.defaultValue;
@@ -10840,193 +10796,12 @@ var Serenity;
                 callback(item, editor);
             }
         };
-        PropertyGrid = PropertyGrid_1 = __decorate([
+        PropertyGrid = __decorate([
             Serenity.Decorators.registerClass('PropertyGrid')
         ], PropertyGrid);
         return PropertyGrid;
-        var PropertyGrid_1;
     }(Serenity.Widget));
     Serenity.PropertyGrid = PropertyGrid;
-    var PropertyItemHelper;
-    (function (PropertyItemHelper) {
-        function getPropertyItemsFor(type) {
-            if (type == null) {
-                throw new ss.Exception('type');
-            }
-            var list = [];
-            var $t1 = ss.getMembers(type, 31, 20);
-            for (var $t2 = 0; $t2 < $t1.length; $t2++) {
-                var member = $t1[$t2];
-                var pi = {};
-                if (member.type !== 16 && member.type !== 4) {
-                    continue;
-                }
-                var hiddenAttribute = (member.attr || []).filter(function (a) {
-                    return ss.isInstanceOfType(a, Serenity.HiddenAttribute);
-                });
-                if (hiddenAttribute.length > 0) {
-                    continue;
-                }
-                var displayNameAttribute = (member.attr || []).filter(function (a) {
-                    return ss.isInstanceOfType(a, System.ComponentModel.DisplayNameAttribute);
-                });
-                var hintAttribute = (member.attr || []).filter(function (a) {
-                    return ss.isInstanceOfType(a, Serenity.HintAttribute);
-                });
-                var placeholderAttribute = (member.attr || []).filter(function (a) {
-                    return ss.isInstanceOfType(a, Serenity.PlaceholderAttribute);
-                });
-                var memberType = ((member.type === 16) ? ss.cast(member, member != null && member.type === 16)
-                    .returnType : ss.cast(member, member != null && member.type === 4).returnType);
-                if (member.type === 16) {
-                    var p = ss.cast(member, member && member.type === 16);
-                    if (p.fname == null) {
-                        continue;
-                    }
-                    pi.name = p.fname;
-                }
-                else if (member.type === 4) {
-                    var f = ss.cast(member, member != null && member.type === 4);
-                    pi.name = f.sname;
-                }
-                else {
-                    continue;
-                }
-                var categoryAttribute = (member.attr || []).filter(function (a) {
-                    return ss.isInstanceOfType(a, Serenity.CategoryAttribute);
-                });
-                if (categoryAttribute.length > 0) {
-                    pi.category = ss.cast(categoryAttribute[0], Serenity.CategoryAttribute).category;
-                }
-                else if (list.length > 0) {
-                    pi.category = list[list.length - 1].category;
-                }
-                var collapsibleAttribute = (member.attr || []).filter(function (a) {
-                    return ss.isInstanceOfType(a, Serenity.CollapsibleAttribute);
-                });
-                if (collapsibleAttribute.length > 0 && ss.cast(collapsibleAttribute[0], Serenity.CollapsibleAttribute).value) {
-                    pi.collapsible = true;
-                    pi.collapsed = ss.cast(collapsibleAttribute[0], Serenity.CollapsibleAttribute).collapsed;
-                }
-                var cssClassAttr = (member.attr || []).filter(function (a) {
-                    return ss.isInstanceOfType(a, Serenity.CssClassAttribute);
-                });
-                if (cssClassAttr.length > 0) {
-                    pi.cssClass = ss.cast(cssClassAttr[0], Serenity.CssClassAttribute).cssClass;
-                }
-                if ((member.attr || []).filter(function (a) {
-                    return ss.isInstanceOfType(a, Serenity.OneWayAttribute);
-                }).length > 0) {
-                    pi.oneWay = true;
-                }
-                if ((member.attr || []).filter(function (a) {
-                    return ss.isInstanceOfType(a, Serenity.ReadOnlyAttribute);
-                }).length > 0) {
-                    pi.readOnly = true;
-                }
-                if (displayNameAttribute.length > 0) {
-                    pi.title = ss.cast(displayNameAttribute[0], System.ComponentModel.DisplayNameAttribute).displayName;
-                }
-                if (hintAttribute.length > 0) {
-                    pi.hint = ss.cast(hintAttribute[0], Serenity.HintAttribute).hint;
-                }
-                if (placeholderAttribute.length > 0) {
-                    pi.placeholder = ss.cast(placeholderAttribute[0], Serenity.PlaceholderAttribute).value;
-                }
-                if (pi.title == null) {
-                    pi.title = pi.name;
-                }
-                var defaultValueAttribute = (member.attr || []).filter(function (a) {
-                    return ss.isInstanceOfType(a, Serenity.DefaultValueAttribute);
-                });
-                if (defaultValueAttribute.length === 1) {
-                    pi.defaultValue = ss.cast(defaultValueAttribute[0], Serenity.DefaultValueAttribute).value;
-                }
-                var insertableAttribute = (member.attr || []).filter(function (a) {
-                    return ss.isInstanceOfType(a, Serenity.InsertableAttribute);
-                });
-                if (insertableAttribute.length > 0) {
-                    pi.insertable = insertableAttribute[0].value;
-                }
-                else {
-                    pi.insertable = true;
-                }
-                var updatableAttribute = (member.attr || []).filter(function (a) {
-                    return ss.isInstanceOfType(a, Serenity.UpdatableAttribute);
-                });
-                if (updatableAttribute.length > 0) {
-                    pi.updatable = updatableAttribute[0].value;
-                }
-                else {
-                    pi.updatable = true;
-                }
-                var typeAttrArray = (member.attr || []).filter(function (a) {
-                    return ss.isInstanceOfType(a, Serenity.EditorTypeAttribute);
-                });
-                var nullableType = memberType;
-                //Nullable.GetUnderlyingType(memberType);
-                var enumType = null;
-                if (ss.isEnum(memberType)) {
-                    enumType = memberType;
-                }
-                else if (nullableType && ss.isEnum(nullableType)) {
-                    enumType = nullableType;
-                }
-                if (typeAttrArray.length === 0) {
-                    if (enumType) {
-                        pi.editorType = 'Select';
-                    }
-                    else if (memberType === ss.JsDate) {
-                        pi.editorType = 'Date';
-                    }
-                    else if (memberType === Boolean) {
-                        pi.editorType = 'Boolean';
-                    }
-                    else if (memberType === Number) {
-                        pi.editorType = 'Decimal';
-                    }
-                    else if (memberType === ss.Int32) {
-                        pi.editorType = 'Integer';
-                    }
-                    else {
-                        pi.editorType = 'String';
-                    }
-                }
-                else {
-                    var et = ss.cast(typeAttrArray[0], Serenity.EditorTypeAttribute);
-                    pi.editorType = et.editorType;
-                    et.setParams(pi.editorParams);
-                }
-                var reqAttr = (member.attr || []).filter(function (a) {
-                    return ss.isInstanceOfType(a, Serenity.RequiredAttribute);
-                });
-                if (reqAttr.length > 0) {
-                    pi.required = reqAttr[0].isRequired;
-                }
-                var maxLengthAttr = (member.attr || []).filter(function (a) {
-                    return ss.isInstanceOfType(a, Serenity.MaxLengthAttribute);
-                });
-                if (maxLengthAttr.length > 0) {
-                    pi.maxLength = maxLengthAttr.maxLength;
-                    pi.editorParams['maxLength'] = pi.maxLength;
-                }
-                var $t3 = (member.attr || []).filter(function (a) {
-                    return ss.isInstanceOfType(a, Serenity.EditorOptionAttribute);
-                });
-                for (var $t4 = 0; $t4 < $t3.length; $t4++) {
-                    var param = $t3[$t4];
-                    var key = param.key;
-                    if (key != null && key.length >= 1) {
-                        key = key.substr(0, 1).toLowerCase() + key.substring(1);
-                    }
-                    pi.editorParams[key] = param.value;
-                }
-                list.push(pi);
-            }
-            return list;
-        }
-        PropertyItemHelper.getPropertyItemsFor = getPropertyItemsFor;
-    })(PropertyItemHelper = Serenity.PropertyItemHelper || (Serenity.PropertyItemHelper = {}));
 })(Serenity || (Serenity = {}));
 var Serenity;
 (function (Serenity) {
@@ -15452,8 +15227,8 @@ var Serenity;
                     takeChildren(getId(child));
                 }
             }
-            for (var _i = 0, items_8 = items; _i < items_8.length; _i++) {
-                var item = items_8[_i];
+            for (var _i = 0, items_6 = items; _i < items_6.length; _i++) {
+                var item = items_6[_i];
                 var parentId = getParentId(item);
                 if (parentId == null ||
                     !((byId[parentId] || []).length)) {
@@ -17449,229 +17224,41 @@ var Serenity;
 (function (Serenity) {
     var UI;
     (function (UI) {
-        var CategoriesProps = /** @class */ (function () {
-            function CategoriesProps() {
-            }
-            return CategoriesProps;
-        }());
-        UI.CategoriesProps = CategoriesProps;
-        var Categories = /** @class */ (function (_super) {
-            __extends(Categories, _super);
-            function Categories() {
+        var IntraPropertyGrid = /** @class */ (function (_super) {
+            __extends(IntraPropertyGrid, _super);
+            function IntraPropertyGrid() {
                 return _super !== null && _super.apply(this, arguments) || this;
             }
-            Categories.applyOrder = function (groups, categoryOrder) {
-                if (!categoryOrder)
-                    return;
-                var split = categoryOrder.split(';');
-                var order = 0;
-                var catOrder = {};
-                for (var _i = 0, split_2 = split; _i < split_2.length; _i++) {
-                    var s = split_2[_i];
-                    var x = Q.trimToNull(s);
-                    if (x == null || catOrder[x] != null)
-                        continue;
-                    catOrder[x] = order++;
-                }
-                groups.inOrder.sort(function (g1, g2) {
-                    var order1 = catOrder[g1.key];
-                    if (order1 == null)
-                        catOrder[g1.key] = catOrder = order++;
-                    var order2 = catOrder[g2.key];
-                    if (order2 == null)
-                        catOrder[g2.key] = catOrder = order++;
-                    return order1 - order2;
+            IntraPropertyGrid.prototype.render = function () {
+                var useTabs = Q.any(this.props.items || [], function (x) {
+                    return !Q.isEmptyOrNull(x.tab);
                 });
-                for (order = 0; order < groups.inOrder.length; order++)
-                    groups.inOrder[order].order = order;
+                if (useTabs)
+                    return React.createElement(UI.PropertyTabs, this.props);
+                var useCategories = this.props.useCategories !== false && Q.any(this.props.items, function (x) {
+                    return !Q.isEmptyOrNull(x.category);
+                });
+                if (useCategories) {
+                    React.createElement(React.Fragment, null,
+                        React.createElement(UI.CategoryLinks, this.props),
+                        React.createElement(UI.Categories, this.props));
+                }
+                return (React.createElement("div", { className: "categories" }, React.createElement(UI.Category, this.props)));
             };
-            Categories.groupByCategory = function (items, defaultCategory, categoryOrder) {
-                var defCat = Q.coalesce(defaultCategory, '');
-                var groups = Q.groupBy(items || [], function (x) { return Q.coalesce(x.category, defCat); });
-                Categories.applyOrder(groups, categoryOrder);
-                return groups;
-            };
-            Categories.prototype.render = function () {
-                var _this = this;
-                return (React.createElement("div", { className: "categories" }, Categories.groupByCategory(this.props.items || [], this.props.defaultCategory, this.props.categoryOrder).inOrder.map(function (g) { return (React.createElement(UI.Category, { categoryId: "Category" + g.order, category: g.key, idPrefix: _this.props.idPrefix, localTextPrefix: _this.props.localTextPrefix, items: g.items, key: g.order })); })));
-            };
-            return Categories;
+            return IntraPropertyGrid;
         }(React.Component));
-        UI.Categories = Categories;
-    })(UI = Serenity.UI || (Serenity.UI = {}));
-})(Serenity || (Serenity = {}));
-var Serenity;
-(function (Serenity) {
-    var UI;
-    (function (UI) {
-        var CategoryTitle = /** @class */ (function (_super) {
-            __extends(CategoryTitle, _super);
-            function CategoryTitle() {
+        UI.IntraPropertyGrid = IntraPropertyGrid;
+        var PropertyGrid = /** @class */ (function (_super) {
+            __extends(PropertyGrid, _super);
+            function PropertyGrid() {
                 return _super !== null && _super.apply(this, arguments) || this;
             }
-            CategoryTitle.prototype.render = function () {
-                return (React.createElement("div", { className: "category-title", onClick: this.props.onClick },
-                    React.createElement("a", { className: "category-anchor", id: this.props.categoryId }, this.props.children),
-                    this.props.collapsed != null && (this.props.collapsed ? CategoryTitle.collapsedIcon : CategoryTitle.expandedIcon)));
+            PropertyGrid.prototype.render = function () {
+                return (React.createElement("div", { className: "s-PropertyGrid" }, _super.prototype.render.call(this)));
             };
-            CategoryTitle.collapsedIcon = React.createElement("i", { className: "fa fa-plus" });
-            CategoryTitle.expandedIcon = React.createElement("i", { className: "fa fa-minus" });
-            return CategoryTitle;
-        }(React.Component));
-        UI.CategoryTitle = CategoryTitle;
-    })(UI = Serenity.UI || (Serenity.UI = {}));
-})(Serenity || (Serenity = {}));
-var Serenity;
-(function (Serenity) {
-    var UI;
-    (function (UI) {
-        var CategoryLineBreak = /** @class */ (function (_super) {
-            __extends(CategoryLineBreak, _super);
-            function CategoryLineBreak() {
-                return _super !== null && _super.apply(this, arguments) || this;
-            }
-            CategoryLineBreak.prototype.getBreakClass = function () {
-                var breakClass = "line-break";
-                var splitted = this.props.breakClass.split(' ');
-                if (splitted.indexOf('line-break-xs') >= 0) {
-                }
-                else if (splitted.indexOf('line-break-sm') >= 0) {
-                    breakClass += " hidden-xs";
-                }
-                else if (splitted.indexOf('line-break-md') >= 0) {
-                    breakClass += " hidden-sm";
-                }
-                else if (splitted.indexOf('line-break-lg') >= 0) {
-                    breakClass += " hidden-md";
-                }
-                return breakClass;
-            };
-            CategoryLineBreak.prototype.render = function () {
-                return (React.createElement("div", { className: this.getBreakClass(), style: { width: "100%" } }));
-            };
-            return CategoryLineBreak;
-        }(React.Component));
-        UI.CategoryLineBreak = CategoryLineBreak;
-    })(UI = Serenity.UI || (Serenity.UI = {}));
-})(Serenity || (Serenity = {}));
-var Serenity;
-(function (Serenity) {
-    var UI;
-    (function (UI) {
-        var CategoryLink = /** @class */ (function (_super) {
-            __extends(CategoryLink, _super);
-            function CategoryLink() {
-                return _super !== null && _super.apply(this, arguments) || this;
-            }
-            CategoryLink.prototype.handleClick = function (e) {
-                e.preventDefault();
-                this.props.onClick && this.props.onClick(e);
-                var title = $('a[id=' + this.props.categoryId + ']');
-                var category = title.closest('.category');
-                if (category.hasClass('collapsed'))
-                    category.children('.category-title').click();
-                if (!title && !title.fadeTo)
-                    return;
-                var animate = function () {
-                    title.fadeTo(100, 0.5, function () {
-                        title.fadeTo(100, 1, function () {
-                        });
-                    });
-                };
-                if (category.closest(':scrollable(both)').length === 0)
-                    animate();
-                else {
-                    var siv = category.scrollintoview;
-                    siv && siv.scrollintoview({
-                        duration: 'fast',
-                        direction: 'y',
-                        complete: animate
-                    });
-                }
-            };
-            CategoryLink.prototype.getLink = function () {
-                if (Q.isEmptyOrNull(this.props.categoryId))
-                    return null;
-                return "#" + this.props.categoryId;
-            };
-            CategoryLink.prototype.render = function () {
-                var _this = this;
-                return (React.createElement("a", { className: "category-link", tabIndex: -1, onClick: function (e) { return _this.handleClick(e); }, href: this.getLink() }, this.props.children));
-            };
-            return CategoryLink;
-        }(React.Component));
-        UI.CategoryLink = CategoryLink;
-    })(UI = Serenity.UI || (Serenity.UI = {}));
-})(Serenity || (Serenity = {}));
-var Serenity;
-(function (Serenity) {
-    var UI;
-    (function (UI) {
-        var CategoryLinks = /** @class */ (function (_super) {
-            __extends(CategoryLinks, _super);
-            function CategoryLinks() {
-                var _this = _super !== null && _super.apply(this, arguments) || this;
-                _this.text = Q.prefixedText(_this.props.localTextPrefix);
-                return _this;
-            }
-            CategoryLinks.prototype.render = function () {
-                var _this = this;
-                var groups = UI.Categories.groupByCategory(this.props.items);
-                return (React.createElement("div", { className: "category-links" }, groups.inOrder.map(function (g, idx) { return [
-                    React.createElement(UI.CategoryLink, { categoryId: "Category" + g.order }, _this.text(g.key, "Categories." + g.key))
-                ]; })));
-            };
-            return CategoryLinks;
-        }(React.Component));
-        UI.CategoryLinks = CategoryLinks;
-    })(UI = Serenity.UI || (Serenity.UI = {}));
-})(Serenity || (Serenity = {}));
-var Serenity;
-(function (Serenity) {
-    var UI;
-    (function (UI) {
-        var PropertyTabs = /** @class */ (function (_super) {
-            __extends(PropertyTabs, _super);
-            function PropertyTabs() {
-                var _this = _super !== null && _super.apply(this, arguments) || this;
-                _this.text = Q.prefixedText(_this.props.localTextPrefix);
-                return _this;
-            }
-            PropertyTabs.groupByTab = function (items) {
-                return Q.groupBy(items || [], function (x) { return Q.coalesce(x.tab, ''); });
-            };
-            PropertyTabs.prototype.renderTab = function (group) {
-                return (React.createElement("li", { className: group.order == 0 ? "active" : null, key: group.order },
-                    React.createElement("a", { "data-toggle": 'tab', role: 'tab', href: "#" + this.props.idPrefix + "_Tab" + group.order }, this.text(group.key, "Tabs." + group.key))));
-            };
-            PropertyTabs.prototype.renderPane = function (group) {
-                return (React.createElement("div", { id: this.props.idPrefix + "_Tab" + group.order, key: group.order, className: "tab-pane fade" + (group.order == 0 ? " in active" : ""), role: "tabpanel" }, this.renderContent(group)));
-            };
-            PropertyTabs.prototype.renderContent = function (group) {
-                var props = {
-                    items: group.items,
-                    idPrefix: this.props.idPrefix,
-                    localTextPrefix: this.props.localTextPrefix,
-                    categoryOrder: this.props.categoryOrder,
-                    defaultCategory: this.props.defaultCategory
-                };
-                if (this.props.renderContent) {
-                    var content = this.props.renderContent(group.key, props);
-                    if (content !== undefined)
-                        return content;
-                }
-                return React.createElement(UI.Categories, __assign({}, props));
-            };
-            PropertyTabs.prototype.render = function () {
-                var _this = this;
-                var tabs = PropertyTabs.groupByTab(this.props.items || []);
-                return (React.createElement(React.Fragment, null,
-                    React.createElement("ul", { className: "nav nav-tabs property-tabs", role: "tablist" }, tabs.inOrder.map(function (g) { return _this.renderTab(g); })),
-                    React.createElement("div", { className: "tab-content property-panes" }, tabs.inOrder.map(function (g) { return _this.renderPane(g); }))));
-            };
-            return PropertyTabs;
-        }(React.Component));
-        UI.PropertyTabs = PropertyTabs;
+            return PropertyGrid;
+        }(IntraPropertyGrid));
+        UI.PropertyGrid = PropertyGrid;
     })(UI = Serenity.UI || (Serenity.UI = {}));
 })(Serenity || (Serenity = {}));
 //# sourceMappingURL=Serenity.CoreLib.js.map

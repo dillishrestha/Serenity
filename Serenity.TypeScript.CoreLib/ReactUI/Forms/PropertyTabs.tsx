@@ -6,7 +6,9 @@
         localTextPrefix?: string;
         categoryOrder?: string;
         defaultCategory?: string;
-        renderContent?: (tab: string, props: CategoriesProps) => React.ReactNode;
+        renderCategories?: (tab: string, props: CategoriesProps) => React.ReactNode;
+        renderCategory?: (props: CategoryProps) => React.ReactNode;
+        renderField?: (props: PropertyItem) => React.ReactNode;
     }
 
     export class PropertyTabs extends React.Component<PropertyTabProps> {
@@ -32,23 +34,25 @@
                 <div id={this.props.idPrefix + "_Tab" + group.order} key={group.order}
                     className={"tab-pane fade" + (group.order == 0 ? " in active" : "")}
                     role="tabpanel">
-                    {this.renderContent(group)}
+                    {this.renderCategories(group)}
                 </div>
             );
         }
 
-        renderContent(group: Q.Group<PropertyItem>) {
+        renderCategories(group: Q.Group<PropertyItem>) {
 
             var props: CategoriesProps = {
                 items: group.items,
                 idPrefix: this.props.idPrefix,
                 localTextPrefix: this.props.localTextPrefix,
                 categoryOrder: this.props.categoryOrder,
-                defaultCategory: this.props.defaultCategory
+                defaultCategory: this.props.defaultCategory,
+                renderCategory: this.props.renderCategory,
+                renderField: this.props.renderField
             }
 
-            if (this.props.renderContent) {
-                var content = this.props.renderContent(group.key, props);
+            if (this.props.renderCategories) {
+                var content = this.props.renderCategories(group.key, props);
                 if (content !== undefined)
                     return content;
             }

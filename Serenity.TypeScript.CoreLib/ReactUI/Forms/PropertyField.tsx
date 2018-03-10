@@ -65,6 +65,7 @@
                     className={this.getClassName()}
                     caption={this.getCaption()}
                     id={this.getEditorId()}
+                    name={this.props.name}
                     labelWidth={this.props.labelWidth}
                     htmlFor={this.getHtmlFor(EditorType)}
                     hint={this.getHint()}
@@ -75,7 +76,9 @@
                             {...this.props.editorParams}
                             setOptions={this.props.editorParams} />
                     }
-                />
+                >
+                    {this.props.children}
+                </Field>
             );
         }
     }
