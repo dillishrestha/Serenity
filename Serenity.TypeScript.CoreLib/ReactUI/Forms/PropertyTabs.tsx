@@ -9,7 +9,7 @@
         renderCategories?: (tab: string, props: CategoriesProps) => React.ReactNode;
         renderCategory?: (props: CategoryProps) => React.ReactNode;
         renderField?: (props: PropertyItem) => React.ReactNode;
-        namedRef?: (name: string, editor: any) => void;
+        setRef?: (name: string, editor: any) => void;
     }
 
     export class PropertyTabs extends React.Component<PropertyTabProps> {
@@ -50,7 +50,7 @@
                 defaultCategory: this.props.defaultCategory,
                 renderCategory: this.props.renderCategory,
                 renderField: this.props.renderField,
-                namedRef: this.props.namedRef
+                setRef: this.props.setRef
             }
 
             if (this.props.renderCategories) {

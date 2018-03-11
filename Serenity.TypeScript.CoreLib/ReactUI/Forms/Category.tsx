@@ -8,7 +8,7 @@
         localTextPrefix?: string;
         items?: PropertyItem[];
         renderField?: (props: PropertyItem) => React.ReactNode;
-        namedRef?: (name: string, editor: any) => void;
+        setRef?: (name: string, editor: any) => void;
     }
 
     export class Category extends React.Component<CategoryProps, Partial<CategoryProps>> {
@@ -75,7 +75,7 @@
                 idPrefix: this.props.idPrefix,
                 localTextPrefix: this.props.localTextPrefix,
                 key: item.name,
-                namedRef: this.props.namedRef
+                setRef: this.props.setRef
             }, item);
 
             if (this.props.renderField != null) {

@@ -1000,6 +1000,19 @@ declare namespace Serenity {
     }
 }
 declare namespace Serenity.UI {
+    class EditorRefs {
+        private inner;
+        private refFunctions;
+        private refs;
+        constructor(inner?: (name: string, ref: any) => void);
+        getRef(name: string): any;
+        setRef(name: string, ref: any): void;
+        ref(name: string): ((ref: any) => void);
+        loadFrom(source: any, names?: string[]): void;
+        saveTo(target: any, names?: string[]): void;
+    }
+}
+declare namespace Serenity.UI {
     interface LabelProps {
         hint?: string;
         htmlFor?: string;
@@ -1031,7 +1044,7 @@ declare namespace Serenity.UI {
         label?: ((p: LabelProps) => JSX.Element);
         htmlFor?: string;
         editor?: ((p: EditorRenderProps) => JSX.Element);
-        namedRef?: (name: string, editor: any) => void;
+        setRef?: (name: string, editor: any) => void;
         hint?: string;
         required?: boolean;
         vx?: boolean;
@@ -1045,7 +1058,7 @@ declare namespace Serenity.UI {
         ref?: (name: string, editor: any) => void;
     }
     class Field extends React.Component<FieldProps> {
-        private namedRef;
+        private editorRef;
         componentWillReceiveProps(nextProps: FieldProps, nextContext?: any): void;
         render(): JSX.Element;
     }
@@ -1054,7 +1067,7 @@ declare namespace Serenity.UI {
     interface PropertyFieldProps extends Serenity.PropertyItem {
         idPrefix?: string;
         localTextPrefix?: string;
-        namedRef?: (name: string, editor: any) => void;
+        setRef?: (name: string, editor: any) => void;
     }
     class PropertyField extends React.Component<PropertyFieldProps> {
         protected text: (text: string, key: string | ((p?: string) => string)) => string;
@@ -1124,7 +1137,7 @@ declare namespace Serenity.UI {
         localTextPrefix?: string;
         items?: PropertyItem[];
         renderField?: (props: PropertyItem) => React.ReactNode;
-        namedRef?: (name: string, editor: any) => void;
+        setRef?: (name: string, editor: any) => void;
     }
     class Category extends React.Component<CategoryProps, Partial<CategoryProps>> {
         protected text: (text: string, key: string | ((p?: string) => string)) => string;
@@ -1148,7 +1161,7 @@ declare namespace Serenity.UI {
         localTextPrefix?: string;
         renderCategory?: (props: CategoryProps) => React.ReactNode;
         renderField?: (props: PropertyItem) => React.ReactNode;
-        namedRef?: (name: string, editor: any) => void;
+        setRef?: (name: string, editor: any) => void;
     }
     class Categories extends React.Component<CategoriesProps> {
         static applyOrder(groups: Q.Groups<Serenity.PropertyItem>, categoryOrder: string): void;
@@ -1186,7 +1199,7 @@ declare namespace Serenity.UI {
         renderCategories?: (tab: string, props: CategoriesProps) => React.ReactNode;
         renderCategory?: (props: CategoryProps) => React.ReactNode;
         renderField?: (props: PropertyItem) => React.ReactNode;
-        namedRef?: (name: string, editor: any) => void;
+        setRef?: (name: string, editor: any) => void;
     }
     class PropertyTabs extends React.Component<PropertyTabProps> {
         protected text: (text: string, key: string | ((p?: string) => string)) => string;
@@ -1209,11 +1222,15 @@ declare namespace Serenity {
         renderCategories?: (tab: string, props: UI.CategoriesProps) => React.ReactNode;
         renderCategory?: (props: UI.CategoryProps) => React.ReactNode;
         renderField?: (props: PropertyItem) => React.ReactNode;
-        namedRef?: (name: string, editor: any) => void;
+        setRef?: (name: string, editor: any) => void;
     }
 }
 declare namespace Serenity.UI {
     class IntraPropertyGrid extends React.Component<PropertyGridOptions> {
+        loadFrom(source: any, editors: UI.EditorRefs): void;
+        canModifyItem(item: PropertyItem): boolean;
+        saveTo(target: any, editors: EditorRefs): void;
+        getItems(): any[];
         render(): React.ReactNode;
     }
     class PropertyGrid extends IntraPropertyGrid {
@@ -2488,14 +2505,12 @@ declare namespace Serenity {
 }
 declare namespace Serenity {
     class PropertyGrid extends Widget<PropertyGridOptions> {
-        private editors;
         private items;
-        private namedRefs;
+        private editors;
+        private propertyGrid;
         constructor(div: JQuery, opt: PropertyGridOptions);
+        private renderIntraGrid();
         destroy(): void;
-        get_editors(): Widget<any>[];
-        get_items(): PropertyItem[];
-        get_idPrefix(): string;
         get_mode(): PropertyGridMode;
         set_mode(value: PropertyGridMode): void;
         static loadEditorValue(editor: Serenity.Widget<any>, item: PropertyItem, source: any): void;
@@ -2505,8 +2520,6 @@ declare namespace Serenity {
         private static setRequired(widget, isRequired);
         load(source: any): void;
         save(target: any): void;
-        private canModifyItem(item);
-        updateInterface(): void;
         enumerateItems(callback: (p1: PropertyItem, p2: Serenity.Widget<any>) => void): void;
     }
     const enum PropertyGridMode {
@@ -3572,12 +3585,4 @@ declare namespace Serenity.DialogExtensions {
 declare namespace Serenity.DialogTypeRegistry {
     function tryGet(key: string): Function;
     function get(key: string): Function;
-}
-declare namespace Serenity.UI {
-    class NamedRefs {
-        private refs;
-        constructor();
-        getRef(name: string): any;
-        setRef(name: string, ref: any): void;
-    }
 }

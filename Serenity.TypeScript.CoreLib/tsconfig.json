@@ -46,7 +46,7 @@
     "Q/Q.React.ts",
     "Decorators/Decorators.ts",
     "Services/Criteria.ts",
-    "ReactUI/NamedRefs.tsx",
+    "ReactUI/EditorRefs.tsx",
     "ReactUI/Forms/Label.tsx",
     "ReactUI/Forms/ValidationMark.tsx",
     "ReactUI/Forms/Field.tsx",

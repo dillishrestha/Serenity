@@ -2498,6 +2498,7 @@ var Q;
             Wrapper.prototype.shouldComponentUpdate = function () {
                 return false;
             };
+            Wrapper.prototype.isWidgetWrapper = true;
             Wrapper.displayName = "Wrapped<" + ss.getTypeFullName(widgetType) + ">";
             return Wrapper;
         }(React.Component));
@@ -3282,6 +3283,79 @@ var Serenity;
 (function (Serenity) {
     var UI;
     (function (UI) {
+        var EditorRefs = /** @class */ (function () {
+            function EditorRefs(inner) {
+                this.inner = inner;
+                this.refFunctions = Object.create(null);
+                this.refs = Object.create(null);
+                this.setRef = this.setRef.bind(this);
+            }
+            EditorRefs.prototype.getRef = function (name) {
+                return this.refs[name];
+            };
+            EditorRefs.prototype.setRef = function (name, ref) {
+                this.refs[name] = ref;
+                if (this.inner != null)
+                    this.inner(name, ref);
+            };
+            EditorRefs.prototype.ref = function (name) {
+                var func = this.refFunctions[name];
+                if (func != null)
+                    return func;
+                var setRef = this.setRef;
+                func = (function (ref) {
+                    setRef(name, ref);
+                });
+                this.refFunctions[name] = func;
+                return func;
+            };
+            EditorRefs.prototype.loadFrom = function (source, names) {
+                names = Q.coalesce(names, Object.keys(this.refs));
+                for (var _i = 0, names_1 = names; _i < names_1.length; _i++) {
+                    var name = names_1[_i];
+                    var editor = this.refs[name];
+                    if (editor == null)
+                        continue;
+                    if (editor.isWidgetWrapper) {
+                        editor = editor.widget;
+                        if (editor)
+                            Serenity.EditorUtils.loadValue(editor, { name: name }, source);
+                    }
+                    else if (editor.nodeType) {
+                        source[name] = editor.value;
+                    }
+                    else if (editor.element) {
+                        Serenity.EditorUtils.loadValue(editor, { name: name }, source);
+                    }
+                }
+            };
+            EditorRefs.prototype.saveTo = function (target, names) {
+                names = Q.coalesce(names, Object.keys(this.refs));
+                for (var _i = 0, names_2 = names; _i < names_2.length; _i++) {
+                    var name = names_2[_i];
+                    var editor = this.refs[name];
+                    if (editor.isWidgetWrapper) {
+                        editor = editor.widget;
+                        if (editor)
+                            Serenity.EditorUtils.saveValue(editor, { name: name }, target);
+                    }
+                    else if (editor.nodeType) {
+                        target[name] = editor.value;
+                    }
+                    else if (editor.element) {
+                        Serenity.EditorUtils.saveValue(editor, { name: name }, target);
+                    }
+                }
+            };
+            return EditorRefs;
+        }());
+        UI.EditorRefs = EditorRefs;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
         var Label = /** @class */ (function (_super) {
             __extends(Label, _super);
             function Label() {
@@ -3332,8 +3406,8 @@ var Serenity;
                 return _super !== null && _super.apply(this, arguments) || this;
             }
             Field.prototype.componentWillReceiveProps = function (nextProps, nextContext) {
-                if (nextProps != null && nextProps.namedRef !== this.props.namedRef) {
-                    this.namedRef = null;
+                if (nextProps != null && nextProps.setRef !== this.props.setRef) {
+                    this.editorRef = null;
                 }
             };
             Field.prototype.render = function () {
@@ -3352,11 +3426,11 @@ var Serenity;
                     className += " " + props.className;
                 }
                 var name = props.name;
-                if (this.props.namedRef != null &&
-                    this.namedRef == null) {
-                    var namedRef = this.props.namedRef;
-                    this.namedRef = function (x) {
-                        namedRef(name, x);
+                if (this.props.setRef != null &&
+                    this.editorRef == null) {
+                    var setRef = this.props.setRef;
+                    this.editorRef = function (x) {
+                        setRef(name, x);
                     };
                 }
                 var editorProps = {
@@ -3364,7 +3438,7 @@ var Serenity;
                     name: name,
                     id: this.props.id,
                     required: this.props.required,
-                    ref: this.namedRef
+                    ref: this.editorRef
                 };
                 return (React.createElement("div", { className: className },
                     lblElement,
@@ -3429,7 +3503,7 @@ var Serenity;
             PropertyField.prototype.render = function () {
                 var _this = this;
                 var EditorType = this.getEditorType();
-                return (React.createElement(UI.Field, { className: this.getClassName(), caption: this.getCaption(), id: this.getEditorId(), name: this.props.name, labelWidth: this.props.labelWidth, htmlFor: this.getHtmlFor(EditorType), hint: this.getHint(), required: this.props.required, namedRef: this.props.namedRef, editor: function (ed) {
+                return (React.createElement(UI.Field, { className: this.getClassName(), caption: this.getCaption(), id: this.getEditorId(), name: this.props.name, labelWidth: this.props.labelWidth, htmlFor: this.getHtmlFor(EditorType), hint: this.getHint(), required: this.props.required, setRef: this.props.setRef, editor: function (ed) {
                         return React.createElement(EditorType, __assign({}, ed, { maxlength: _this.getMaxLength() }, _this.props.editorParams, { setOptions: _this.props.editorParams }));
                     } }, this.props.children));
             };
@@ -3619,7 +3693,7 @@ var Serenity;
                     idPrefix: this.props.idPrefix,
                     localTextPrefix: this.props.localTextPrefix,
                     key: item.name,
-                    namedRef: this.props.namedRef
+                    setRef: this.props.setRef
                 }, item);
                 if (this.props.renderField != null) {
                     var content = this.props.renderField(props);
@@ -3702,7 +3776,8 @@ var Serenity;
                     localTextPrefix: this.props.localTextPrefix,
                     items: group.items,
                     key: group.order,
-                    renderField: this.props.renderField
+                    renderField: this.props.renderField,
+                    setRef: this.props.setRef
                 };
                 if (this.props.renderCategory != null) {
                     var content = this.props.renderCategory(catProps);
@@ -3811,7 +3886,7 @@ var Serenity;
                     defaultCategory: this.props.defaultCategory,
                     renderCategory: this.props.renderCategory,
                     renderField: this.props.renderField,
-                    namedRef: this.props.namedRef
+                    setRef: this.props.setRef
                 };
                 if (this.props.renderCategories) {
                     var content = this.props.renderCategories(group.key, props);
@@ -3841,21 +3916,77 @@ var Serenity;
             function IntraPropertyGrid() {
                 return _super !== null && _super.apply(this, arguments) || this;
             }
+            IntraPropertyGrid.prototype.loadFrom = function (source, editors) {
+                var items = this.props.items || [];
+                for (var _i = 0, items_2 = items; _i < items_2.length; _i++) {
+                    var item = items_2[_i];
+                    if (this.props.mode != 2 /* update */ &&
+                        item.defaultValue != null &&
+                        typeof (source[item.name]) === 'undefined') {
+                        source[item.name] = item.defaultValue;
+                    }
+                }
+                editors.loadFrom(source, items.map(function (x) { return x.name; }));
+            };
+            IntraPropertyGrid.prototype.canModifyItem = function (item) {
+                if (this.props.mode != 2 /* update */) {
+                    if (item.insertable === false) {
+                        return false;
+                    }
+                    if (item.insertPermission == null) {
+                        return true;
+                    }
+                    return Q.Authorization.hasPermission(item.insertPermission);
+                }
+                if (item.updatable === false) {
+                    return false;
+                }
+                if (item.updatePermission == null) {
+                    return true;
+                }
+                return Q.Authorization.hasPermission(item.updatePermission);
+            };
+            IntraPropertyGrid.prototype.saveTo = function (target, editors) {
+                var _this = this;
+                var items = this.props.items || [];
+                var names = items.filter(function (x) { return x.oneWay !== true && _this.canModifyItem(x); })
+                    .map(function (x) { return x.name; });
+                editors.saveTo(target, names);
+            };
+            IntraPropertyGrid.prototype.getItems = function () {
+                var _this = this;
+                return (this.props.items || []).map(function (item) {
+                    var readOnly = item.readOnly === true || !_this.canModifyItem(item);
+                    var required = !readOnly && !!item.required && item.editorType !== 'Boolean';
+                    var visible = !((item.readPermission != null &&
+                        !Q.Authorization.hasPermission(item.readPermission)) ||
+                        item.visible === false ||
+                        (_this.props.mode != 2 /* update */ && item.hideOnInsert === true) ||
+                        (_this.props.mode == 2 /* update */ && item.hideOnUpdate === true));
+                    return Q.extend(Q.extend({}, item), {
+                        readOnly: readOnly,
+                        required: required,
+                        visible: visible
+                    });
+                });
+            };
             IntraPropertyGrid.prototype.render = function () {
-                var useTabs = Q.any(this.props.items || [], function (x) {
+                var props = Q.extend({}, this.props);
+                props.items = this.getItems();
+                var useTabs = Q.any(props.items, function (x) {
                     return !Q.isEmptyOrNull(x.tab);
                 });
                 if (useTabs)
-                    return React.createElement(UI.PropertyTabs, this.props);
-                var useCategories = this.props.useCategories !== false && Q.any(this.props.items, function (x) {
+                    return React.createElement(UI.PropertyTabs, props);
+                var useCategories = props.useCategories !== false && Q.any(props.items, function (x) {
                     return !Q.isEmptyOrNull(x.category);
                 });
                 if (useCategories) {
                     React.createElement(React.Fragment, null,
-                        React.createElement(UI.CategoryLinks, this.props),
-                        React.createElement(UI.Categories, this.props));
+                        React.createElement(UI.CategoryLinks, props),
+                        React.createElement(UI.Categories, props));
                 }
-                return (React.createElement("div", { className: "categories" }, React.createElement(UI.Category, this.props)));
+                return (React.createElement("div", { className: "categories" }, React.createElement(UI.Category, props)));
             };
             return IntraPropertyGrid;
         }(React.Component));
@@ -4071,8 +4202,8 @@ var Serenity;
                     }
                     else {
                         var items = grid.getView().getItems();
-                        for (var _i = 0, items_2 = items; _i < items_2.length; _i++) {
-                            var x = items_2[_i];
+                        for (var _i = 0, items_3 = items; _i < items_3.length; _i++) {
+                            var x = items_3[_i];
                             var id1 = x[_this.idField];
                             _this.include[id1] = true;
                         }
@@ -4577,8 +4708,8 @@ var Serenity;
         SlickTreeHelper.filterById = filterById;
         function setCollapsed(items, collapsed) {
             if (items != null) {
-                for (var _i = 0, items_3 = items; _i < items_3.length; _i++) {
-                    var item = items_3[_i];
+                for (var _i = 0, items_4 = items; _i < items_4.length; _i++) {
+                    var item = items_4[_i];
                     item._collapsed = collapsed;
                 }
             }
@@ -6352,8 +6483,8 @@ var Serenity;
             this.clearItems();
             if (items.length > 0) {
                 var isStrings = typeof (items[0]) === 'string';
-                for (var _i = 0, items_4 = items; _i < items_4.length; _i++) {
-                    var item = items_4[_i];
+                for (var _i = 0, items_5 = items; _i < items_5.length; _i++) {
+                    var item = items_5[_i];
                     var key = isStrings ? item : item[0];
                     var text = isStrings ? item : Q.coalesce(item[1], item[0]);
                     this.addOption(key, text, item, false);
@@ -9373,8 +9504,8 @@ var Serenity;
         FilterPanel.prototype.updateRowsFromStore = function () {
             this.rowsDiv.empty();
             var items = this.get_store().get_items();
-            for (var _i = 0, items_5 = items; _i < items_5.length; _i++) {
-                var item = items_5[_i];
+            for (var _i = 0, items_6 = items; _i < items_6.length; _i++) {
+                var item = items_6[_i];
                 this.addEmptyRow(false);
                 var row = this.rowsDiv.children().last();
                 var divl = row.children('div.l');
@@ -10682,80 +10813,28 @@ var Serenity;
         __extends(PropertyGrid, _super);
         function PropertyGrid(div, opt) {
             var _this = _super.call(this, div, opt) || this;
-            _this.namedRefs = new Serenity.UI.NamedRefs;
             if (opt.mode == null)
                 opt.mode = 1;
             div.addClass('s-PropertyGrid');
-            _this.editors = [];
             _this.items = _this.options.items || [];
-            if (div.length > 0)
-                ReactDOM.render(React.createElement(Serenity.UI.IntraPropertyGrid, _this.options), div[0]);
-            _this.element.find(".field").each(function (i, el) {
-                if ($(el).closest('.s-PropertyGrid')[0] !== _this.element[0])
-                    return;
-                var w;
-                var wrapper = $(el).find('.widget-wrapper');
-                if (wrapper.length == 1) {
-                    var ed = wrapper.children();
-                    if (ed.length > 1) {
-                        var withEdClass = ed.filter('.editor').not('.select2-container');
-                        if (withEdClass.length == 1)
-                            ed = withEdClass;
-                        else {
-                            var withName = ed.filter(function (i, e) { return !!$(e).attr('name'); });
-                            if (withName.length == 1)
-                                ed = withName;
-                        }
-                    }
-                    if (ed.length == 1) {
-                        w = ed.tryGetWidget(Serenity.Widget);
-                        if (w != null) {
-                            _this.editors.push(w);
-                            return;
-                        }
-                    }
-                }
-                var eds = $(el).find('.editor').not('.select2-container');
-                if (eds.length > 1) {
-                    eds = eds.filter(function (i, e) { return !!$(e).attr('name'); });
-                }
-                if (eds.length == 1) {
-                    w = eds.tryGetWidget(Serenity.Widget);
-                    if (w != null) {
-                        _this.editors.push(w);
-                        return;
-                    }
-                }
-                eds = $(el).find(':input');
-                if (eds.length == 1) {
-                    w = eds.tryGetWidget(Serenity.Widget);
-                    if (w != null) {
-                        _this.editors.push(w);
-                        return;
-                    }
-                }
-            });
-            _this.updateInterface();
+            _this.renderIntraGrid();
             return _this;
         }
+        PropertyGrid.prototype.renderIntraGrid = function () {
+            if (!this.element || !this.element.length)
+                return;
+            var props = Q.extend({}, this.options);
+            if (this.editors == null)
+                this.editors = new Serenity.UI.EditorRefs(this.props.setRef);
+            props.setRef = this.editors.setRef;
+            this.propertyGrid = ReactDOM.render(React.createElement(Serenity.UI.IntraPropertyGrid, props), this.element[0]);
+        };
         PropertyGrid.prototype.destroy = function () {
-            this.namedRefs = null;
-            if (this.editors != null) {
-                for (var i = 0; i < this.editors.length; i++) {
-                    this.editors[i] != null && this.editors[i].destroy();
-                }
+            if (this.editors != null && this.element != null && this.element.length) {
                 this.editors = null;
+                ReactDOM.unmountComponentAtNode(this.element[0]);
             }
             Serenity.Widget.prototype.destroy.call(this);
-        };
-        PropertyGrid.prototype.get_editors = function () {
-            return this.editors;
-        };
-        PropertyGrid.prototype.get_items = function () {
-            return this.items;
-        };
-        PropertyGrid.prototype.get_idPrefix = function () {
-            return this.options.idPrefix;
         };
         PropertyGrid.prototype.get_mode = function () {
             return this.options.mode;
@@ -10763,7 +10842,7 @@ var Serenity;
         PropertyGrid.prototype.set_mode = function (value) {
             if (this.options.mode !== value) {
                 this.options.mode = value;
-                this.updateInterface();
+                this.renderIntraGrid();
             }
         };
         // Obsolete
@@ -10786,74 +10865,17 @@ var Serenity;
             Serenity.EditorUtils.setRequired(widget, isRequired);
         };
         PropertyGrid.prototype.load = function (source) {
-            for (var i = 0; i < this.editors.length; i++) {
-                var item = this.items[i];
-                var editor = this.editors[i];
-                if (editor == null)
-                    continue;
-                if (!!(this.get_mode() === 1 && item.defaultValue != null) &&
-                    typeof (source[item.name]) === 'undefined') {
-                    source[item.name] = item.defaultValue;
-                }
-                Serenity.EditorUtils.loadValue(editor, item, source);
-            }
+            this.propertyGrid.loadFrom(source, this.editors);
         };
         PropertyGrid.prototype.save = function (target) {
-            for (var i = 0; i < this.editors.length; i++) {
-                var item = this.items[i];
-                if (item.oneWay !== true && this.canModifyItem(item)) {
-                    var editor = this.editors[i];
-                    Serenity.EditorUtils.saveValue(editor, item, target);
-                }
-            }
-        };
-        PropertyGrid.prototype.canModifyItem = function (item) {
-            if (this.get_mode() === 1 /* insert */) {
-                if (item.insertable === false) {
-                    return false;
-                }
-                if (item.insertPermission == null) {
-                    return true;
-                }
-                return Q.Authorization.hasPermission(item.insertPermission);
-            }
-            else if (this.get_mode() === 2 /* update */) {
-                if (item.updatable === false) {
-                    return false;
-                }
-                if (item.updatePermission == null) {
-                    return true;
-                }
-                return Q.Authorization.hasPermission(item.updatePermission);
-            }
-            return true;
-        };
-        PropertyGrid.prototype.updateInterface = function () {
-            for (var i = 0; i < this.editors.length; i++) {
-                var item = this.items[i];
-                var editor = this.editors[i];
-                var readOnly = item.readOnly === true || !this.canModifyItem(item);
-                Serenity.EditorUtils.setReadOnly(editor, readOnly);
-                Serenity.EditorUtils.setRequired(editor, !readOnly &&
-                    !!item.required && item.editorType !== 'Boolean');
-                if (item.visible === false || item.readPermission != null ||
-                    item.insertPermission != null || item.updatePermission != null ||
-                    item.hideOnInsert === true || item.hideOnUpdate === true) {
-                    var hidden = (item.readPermission != null &&
-                        !Q.Authorization.hasPermission(item.readPermission)) ||
-                        item.visible === false ||
-                        (this.get_mode() === 1 /* insert */ && item.hideOnInsert === true) ||
-                        (this.get_mode() === 2 && item.hideOnUpdate === true);
-                    editor.getGridField().toggle(!hidden);
-                }
-            }
+            this.propertyGrid.saveTo(target, this.editors);
         };
         PropertyGrid.prototype.enumerateItems = function (callback) {
-            for (var i = 0; i < this.editors.length; i++) {
-                var item = this.items[i];
-                var editor = this.editors[i];
-                callback(item, editor);
-            }
+            //for (var i = 0; i < this.editors.length; i++) {
+            //    var item = this.items[i];
+            //    var editor = this.editors[i];
+            //    callback(item, editor);
+            //}
         };
         PropertyGrid = __decorate([
             Serenity.Decorators.registerClass('PropertyGrid')
@@ -15286,8 +15308,8 @@ var Serenity;
                     takeChildren(getId(child));
                 }
             }
-            for (var _i = 0, items_6 = items; _i < items_6.length; _i++) {
-                var item = items_6[_i];
+            for (var _i = 0, items_7 = items; _i < items_7.length; _i++) {
+                var item = items_7[_i];
                 var parentId = getParentId(item);
                 if (parentId == null ||
                     !((byId[parentId] || []).length)) {
@@ -17278,25 +17300,5 @@ var Serenity;
         }
         DialogTypeRegistry.get = get;
     })(DialogTypeRegistry = Serenity.DialogTypeRegistry || (Serenity.DialogTypeRegistry = {}));
-})(Serenity || (Serenity = {}));
-var Serenity;
-(function (Serenity) {
-    var UI;
-    (function (UI) {
-        var NamedRefs = /** @class */ (function () {
-            function NamedRefs() {
-                this.refs = {};
-                this.setRef = this.setRef.bind(this);
-            }
-            NamedRefs.prototype.getRef = function (name) {
-                return this.refs[name];
-            };
-            NamedRefs.prototype.setRef = function (name, ref) {
-                this.refs[name] = ref;
-            };
-            return NamedRefs;
-        }());
-        UI.NamedRefs = NamedRefs;
-    })(UI = Serenity.UI || (Serenity.UI = {}));
 })(Serenity || (Serenity = {}));
 //# sourceMappingURL=Serenity.CoreLib.js.map

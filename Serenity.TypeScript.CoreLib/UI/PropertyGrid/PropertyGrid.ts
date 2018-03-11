@@ -3,9 +3,9 @@
     @Decorators.registerClass('PropertyGrid')
     export class PropertyGrid extends Widget<PropertyGridOptions> {
 
-        private editors: Widget<any>[];
         private items: PropertyItem[];
-        private namedRefs = new UI.NamedRefs;
+        private editors: UI.EditorRefs;
+        private propertyGrid: UI.IntraPropertyGrid;
 
         constructor(div: JQuery, opt: PropertyGridOptions) {
             super(div, opt);
@@ -14,91 +14,30 @@
                 opt.mode = 1;
 
             div.addClass('s-PropertyGrid');
-            this.editors = [];
             this.items = this.options.items || [];
 
-            if (div.length > 0)
-                ReactDOM.render(React.createElement(UI.IntraPropertyGrid, this.options), div[0]);
+            this.renderIntraGrid();
+        }
 
-            this.element.find(".field").each((i, el) => {
-                if ($(el).closest('.s-PropertyGrid')[0] !== this.element[0])
-                    return;
+        private renderIntraGrid() {
+            if (!this.element || !this.element.length)
+                return;
 
-                var w: Widget<any>;
-                var wrapper = $(el).find('.widget-wrapper');
-
-                if (wrapper.length == 1) {
-                    var ed = wrapper.children();
-
-                    if (ed.length > 1) {
-                        var withEdClass = ed.filter('.editor').not('.select2-container')
-                        if (withEdClass.length == 1)
-                            ed = withEdClass;
-                        else {
-                            var withName = ed.filter((i, e) => !!$(e).attr('name'));
-                            if (withName.length == 1)
-                                ed = withName;
-                        }
-                    }
-
-                    if (ed.length == 1) {
-                        w = ed.tryGetWidget(Serenity.Widget);
-                        if (w != null) {
-                            this.editors.push(w);
-                            return;
-                        }
-                    }
-                }
-
-                var eds = $(el).find('.editor').not('.select2-container');
-                if (eds.length > 1) {
-                    eds = eds.filter((i, e) => !!$(e).attr('name'));
-                }
-
-                if (eds.length == 1) {
-                    w = eds.tryGetWidget(Serenity.Widget);
-                    if (w != null) {
-                        this.editors.push(w);
-                        return;
-                    }
-                }
-
-                eds = $(el).find(':input');
-                if (eds.length == 1) {
-                    w = eds.tryGetWidget(Serenity.Widget);
-                    if (w != null) {
-                        this.editors.push(w);
-                        return;
-                    }
-                }
-            });
-
-            this.updateInterface();
+            var props = Q.extend({}, this.options);
+            if (this.editors == null)
+                this.editors = new UI.EditorRefs(this.props.setRef);
+            props.setRef = this.editors.setRef;
+            this.propertyGrid = ReactDOM.render(React.createElement(UI.IntraPropertyGrid, props), this.element[0]);
         }
 
         destroy() {
 
-            this.namedRefs = null;
-            if (this.editors != null) {
-                for (var i = 0; i < this.editors.length; i++) {
-                    this.editors[i] != null && this.editors[i].destroy();
-                }
+            if (this.editors != null && this.element != null && this.element.length) {
                 this.editors = null;
+                ReactDOM.unmountComponentAtNode(this.element[0]);
             }
 
             Serenity.Widget.prototype.destroy.call(this);
-        }
-
-        get_editors(): Widget<any>[] {
-            return this.editors;
-        }
-
-        get_items(): PropertyItem[] {
-            return this.items;
-        }
-
-        get_idPrefix(): string {
-            return this.options.idPrefix;
         }
 
         get_mode(): PropertyGridMode {
@@ -108,7 +47,7 @@
         set_mode(value: PropertyGridMode) {
             if(this.options.mode !== value) {
                 this.options.mode = value;
-                this.updateInterface();
+                this.renderIntraGrid();
             }
         }
 
@@ -140,84 +79,19 @@
         }
 
         load(source: any): void {
-            for (var i = 0; i < this.editors.length; i++) {
-                var item = this.items[i];
-                var editor = this.editors[i];
-                if (editor == null)
-                    continue;
-                if (!!(this.get_mode() === 1 && item.defaultValue != null) &&
-                    typeof (source[item.name]) === 'undefined') {
-                    source[item.name] = item.defaultValue;
-                }
-
-                Serenity.EditorUtils.loadValue(editor, item, source);
-            }
+            this.propertyGrid.loadFrom(source, this.editors);
         }
 
         save(target: any): void {
-            for (var i = 0; i < this.editors.length; i++) {
-                var item = this.items[i];
-                if (item.oneWay !== true && this.canModifyItem(item)) {
-                    var editor = this.editors[i];
-                    Serenity.EditorUtils.saveValue(editor, item, target);
-                }
-            }
-        }
-
-        private canModifyItem(item: PropertyItem) {
-            if (this.get_mode() === PropertyGridMode.insert) {
-                if (item.insertable === false) {
-                    return false;
-                }
-
-                if (item.insertPermission == null) {
-                    return true;
-                }
-
-                return Q.Authorization.hasPermission(item.insertPermission);
-            }
-            else if (this.get_mode() === PropertyGridMode.update) {
-                if (item.updatable === false) {
-                    return false;
-                }
-
-                if (item.updatePermission == null) {
-                    return true;
-                }
-
-                return Q.Authorization.hasPermission(item.updatePermission);
-            }
-			return true;
-        }
-
-        updateInterface() {
-            for (var i = 0; i < this.editors.length; i++) {
-                var item = this.items[i];
-                var editor = this.editors[i];
-                var readOnly = item.readOnly === true || !this.canModifyItem(item);
-                Serenity.EditorUtils.setReadOnly(editor, readOnly);
-                Serenity.EditorUtils.setRequired(editor, !readOnly &&
-                    !!item.required && item.editorType !== 'Boolean');
-                if (item.visible === false || item.readPermission != null ||
-                    item.insertPermission != null || item.updatePermission != null ||
-                    item.hideOnInsert === true || item.hideOnUpdate === true) {
-                    var hidden = (item.readPermission != null &&
-                        !Q.Authorization.hasPermission(item.readPermission)) ||
-                        item.visible === false ||
-                        (this.get_mode() === PropertyGridMode.insert && item.hideOnInsert === true) ||
-                        (this.get_mode() === 2 && item.hideOnUpdate === true);
-
-                    editor.getGridField().toggle(!hidden);
-                }
-            }
+            this.propertyGrid.saveTo(target, this.editors);
         }
 
         enumerateItems(callback: (p1: PropertyItem, p2: Serenity.Widget<any>) => void): void {
-            for (var i = 0; i < this.editors.length; i++) {
-                var item = this.items[i];
-                var editor = this.editors[i];
-                callback(item, editor);
-            }
+            //for (var i = 0; i < this.editors.length; i++) {
+            //    var item = this.items[i];
+            //    var editor = this.editors[i];
+            //    callback(item, editor);
+            //}
         }
     }
 

@@ -10,7 +10,7 @@
         renderCategories?: (tab: string, props: UI.CategoriesProps) => React.ReactNode;
         renderCategory?: (props: UI.CategoryProps) => React.ReactNode;
         renderField?: (props: PropertyItem) => React.ReactNode;
-        namedRef?: (name: string, editor: any) => void;
+        setRef?: (name: string, editor: any) => void;
     }
 }
 
@@ -18,28 +18,96 @@ namespace Serenity.UI {
 
     export class IntraPropertyGrid extends React.Component<PropertyGridOptions> {
 
+        loadFrom(source: any, editors: UI.EditorRefs): void {
+            var items = this.props.items || [];
+
+            for (var item of items) {
+
+                if (this.props.mode != PropertyGridMode.update &&
+                    item.defaultValue != null &&
+                    typeof (source[item.name]) === 'undefined') {
+                    source[item.name] = item.defaultValue;
+                }
+            }
+
+            editors.loadFrom(source, items.map(x => x.name));
+        }
+
+        canModifyItem(item: PropertyItem) {
+            if (this.props.mode != PropertyGridMode.update) {
+                if (item.insertable === false) {
+                    return false;
+                }
+
+                if (item.insertPermission == null) {
+                    return true;
+                }
+
+                return Q.Authorization.hasPermission(item.insertPermission);
+            }
+
+            if (item.updatable === false) {
+                return false;
+            }
+
+            if (item.updatePermission == null) {
+                return true;
+            }
+
+            return Q.Authorization.hasPermission(item.updatePermission);
+        }
+
+        saveTo(target: any, editors: EditorRefs): void {
+            var items = this.props.items || [];
+            var names = items.filter(x => x.oneWay !== true && this.canModifyItem(x))
+                .map(x => x.name);
+            editors.saveTo(target, names);
+        }
+
+        getItems() {
+            return (this.props.items || []).map(item => {
+                var readOnly = item.readOnly === true || !this.canModifyItem(item);
+                var required = !readOnly && !!item.required && item.editorType !== 'Boolean';
+                var visible = !((item.readPermission != null &&
+                    !Q.Authorization.hasPermission(item.readPermission)) ||
+                    item.visible === false ||
+                    (this.props.mode != Serenity.PropertyGridMode.update && item.hideOnInsert === true) ||
+                    (this.props.mode == Serenity.PropertyGridMode.update && item.hideOnUpdate === true));
+
+                return Q.extend(Q.extend({}, item), {
+                    readOnly: readOnly,
+                    required: required,
+                    visible: visible
+                });
+            });
+        }
+
         render(): React.ReactNode {
-            var useTabs = Q.any(this.props.items || [], function (x) {
+
+            var props: PropertyGridOptions = Q.extend({}, this.props);
+            props.items = this.getItems();
+
+            var useTabs = Q.any(props.items, function (x) {
                 return !Q.isEmptyOrNull(x.tab);
             });
 
             if (useTabs)
-                return React.createElement(UI.PropertyTabs, this.props);
+                return React.createElement(UI.PropertyTabs, props);
 
-            var useCategories = this.props.useCategories !== false && Q.any(this.props.items, function (x) {
+            var useCategories = props.useCategories !== false && Q.any(props.items, function (x) {
                 return !Q.isEmptyOrNull(x.category);
             });
 
             if (useCategories) {
                 <React.Fragment>
-                    {React.createElement(UI.CategoryLinks, this.props)}
-                    {React.createElement(UI.Categories, this.props)}
+                    {React.createElement(UI.CategoryLinks, props)}
+                    {React.createElement(UI.Categories, props)}
                 </React.Fragment>
             }
 
             return (
                 <div className="categories">
-                    {React.createElement(UI.Category, this.props)}
+                    {React.createElement(UI.Category, props)}
                 </div>
             )
         }

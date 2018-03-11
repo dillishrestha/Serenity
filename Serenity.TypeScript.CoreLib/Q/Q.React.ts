@@ -127,6 +127,8 @@ namespace Q {
                 return false;
             };
 
+            Wrapper.prototype.isWidgetWrapper = true;
+
             (Wrapper as any).displayName = "Wrapped<" + (ss as any).getTypeFullName(widgetType) + ">";
 
             return Wrapper;

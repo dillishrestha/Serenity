@@ -69,6 +69,7 @@
     <TypeScriptCompile Include="ReactUI\Forms\ValidateForm.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\ValidationMark.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\Label.tsx" />
+    <TypeScriptCompile Include="ReactUI\EditorRefs.tsx" />
     <TypeScriptCompile Include="Services\ServiceError.ts" />
     <TypeScriptCompile Include="Services\ServiceResponse.ts" />
     <TypeScriptCompile Include="Q\Q.BasicUtils.ts" />
