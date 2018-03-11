@@ -814,11 +814,6 @@ declare namespace Serenity {
         category: string;
         constructor(category: string);
     }
-    class CollapsibleAttribute {
-        value: boolean;
-        constructor(value: boolean);
-        collapsed: boolean;
-    }
     class ColumnsKeyAttribute {
         value: string;
         constructor(value: string);
@@ -964,24 +959,16 @@ declare namespace Serenity {
 declare namespace Serenity.Decorators {
     function registerFormatter(nameOrIntf?: string | any[], intf2?: any[]): (target: Function) => void;
     function addAttribute(type: any, attr: any): void;
-    function columnsKey(value: string): (target: Function) => void;
     function dialogType(value: Function): (target: Function) => void;
     function editor(key?: string): (target: Function) => void;
     function element(value: string): (target: Function) => void;
-    function entityType(value: string): (target: Function) => void;
     function enumKey(value: string): (target: Function) => void;
     function flexify(value?: boolean): (target: Function) => void;
-    function formKey(value: string): (target: Function) => void;
-    function generatedCode(origin?: string): (target: Function) => void;
-    function idProperty(value: string): (target: Function) => void;
     function registerEnum(target: any, enumKey?: string, name?: string): void;
     function registerEnumType(target: any, name?: string, enumKey?: string): void;
     function filterable(value?: boolean): (target: Function) => void;
     function itemName(value: string): (target: Function) => void;
-    function isActiveProperty(value: string): (target: Function) => void;
-    function localTextPrefix(value: string): (target: Function) => void;
     function maximizable(value?: boolean): (target: Function) => void;
-    function nameProperty(value: string): (target: Function) => void;
     function option(): (target: Object, propertyKey: string) => void;
     function optionsType(value: Function): (target: Function) => void;
     function panel(value?: boolean): (target: Function) => void;

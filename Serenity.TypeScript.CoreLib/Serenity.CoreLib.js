@@ -2606,16 +2606,6 @@ var System;
         return CategoryAttribute;
     }());
     Serenity.CategoryAttribute = CategoryAttribute;
-    var CollapsibleAttribute = /** @class */ (function () {
-        function CollapsibleAttribute(value) {
-            this.value = value;
-        }
-        CollapsibleAttribute = __decorate([
-            Attr('Collapsible')
-        ], CollapsibleAttribute);
-        return CollapsibleAttribute;
-    }());
-    Serenity.CollapsibleAttribute = CollapsibleAttribute;
     var ColumnsKeyAttribute = /** @class */ (function () {
         function ColumnsKeyAttribute(value) {
             this.value = value;
@@ -3002,12 +2992,6 @@ var System;
             type.__metadata.attr.push(attr);
         }
         Decorators.addAttribute = addAttribute;
-        function columnsKey(value) {
-            return function (target) {
-                addAttribute(target, new Serenity.ColumnsKeyAttribute(value));
-            };
-        }
-        Decorators.columnsKey = columnsKey;
         function dialogType(value) {
             return function (target) {
                 addAttribute(target, new Serenity.DialogTypeAttribute(value));
@@ -3029,12 +3013,6 @@ var System;
             };
         }
         Decorators.element = element;
-        function entityType(value) {
-            return function (target) {
-                addAttribute(target, new Serenity.EntityTypeAttribute(value));
-            };
-        }
-        Decorators.entityType = entityType;
         function enumKey(value) {
             return function (target) {
                 addAttribute(target, new Serenity.EnumKeyAttribute(value));
@@ -3048,24 +3026,6 @@ var System;
             };
         }
         Decorators.flexify = flexify;
-        function formKey(value) {
-            return function (target) {
-                addAttribute(target, new Serenity.FormKeyAttribute(value));
-            };
-        }
-        Decorators.formKey = formKey;
-        function generatedCode(origin) {
-            return function (target) {
-                addAttribute(target, new Serenity.GeneratedCodeAttribute(origin));
-            };
-        }
-        Decorators.generatedCode = generatedCode;
-        function idProperty(value) {
-            return function (target) {
-                addAttribute(target, new Serenity.IdPropertyAttribute(value));
-            };
-        }
-        Decorators.idProperty = idProperty;
         function registerEnum(target, enumKey, name) {
             if (!target.__enum) {
                 Object.defineProperty(target, '__enum', {
@@ -3108,18 +3068,6 @@ var System;
             };
         }
         Decorators.itemName = itemName;
-        function isActiveProperty(value) {
-            return function (target) {
-                addAttribute(target, new Serenity.IsActivePropertyAttribute(value));
-            };
-        }
-        Decorators.isActiveProperty = isActiveProperty;
-        function localTextPrefix(value) {
-            return function (target) {
-                addAttribute(target, new Serenity.LocalTextPrefixAttribute(value));
-            };
-        }
-        Decorators.localTextPrefix = localTextPrefix;
         function maximizable(value) {
             if (value === void 0) { value = true; }
             return function (target) {
@@ -3127,12 +3075,6 @@ var System;
             };
         }
         Decorators.maximizable = maximizable;
-        function nameProperty(value) {
-            return function (target) {
-                addAttribute(target, new Serenity.NamePropertyAttribute(value));
-            };
-        }
-        Decorators.nameProperty = nameProperty;
         function option() {
             return function (target, propertyKey) {
                 var isGetSet = Q.startsWith(propertyKey, 'get_') || Q.startsWith(propertyKey, 'set_');
