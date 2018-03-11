@@ -3331,6 +3331,11 @@ var Serenity;
             function Field() {
                 return _super !== null && _super.apply(this, arguments) || this;
             }
+            Field.prototype.componentWillReceiveProps = function (nextProps, nextContext) {
+                if (nextProps != null && nextProps.namedRef !== this.props.namedRef) {
+                    this.namedRef = null;
+                }
+            };
             Field.prototype.render = function () {
                 var props = this.props;
                 var lblElement;
@@ -3346,11 +3351,20 @@ var Serenity;
                 if (props.className) {
                     className += " " + props.className;
                 }
+                var name = props.name;
+                if (this.props.namedRef != null &&
+                    this.namedRef == null) {
+                    var namedRef = this.props.namedRef;
+                    this.namedRef = function (x) {
+                        namedRef(name, x);
+                    };
+                }
                 var editorProps = {
                     className: "editor",
-                    name: this.props.name,
+                    name: name,
                     id: this.props.id,
-                    required: this.props.required
+                    required: this.props.required,
+                    ref: this.namedRef
                 };
                 return (React.createElement("div", { className: className },
                     lblElement,
@@ -3415,7 +3429,7 @@ var Serenity;
             PropertyField.prototype.render = function () {
                 var _this = this;
                 var EditorType = this.getEditorType();
-                return (React.createElement(UI.Field, { className: this.getClassName(), caption: this.getCaption(), id: this.getEditorId(), name: this.props.name, labelWidth: this.props.labelWidth, htmlFor: this.getHtmlFor(EditorType), hint: this.getHint(), required: this.props.required, editor: function (ed) {
+                return (React.createElement(UI.Field, { className: this.getClassName(), caption: this.getCaption(), id: this.getEditorId(), name: this.props.name, labelWidth: this.props.labelWidth, htmlFor: this.getHtmlFor(EditorType), hint: this.getHint(), required: this.props.required, namedRef: this.props.namedRef, editor: function (ed) {
                         return React.createElement(EditorType, __assign({}, ed, { maxlength: _this.getMaxLength() }, _this.props.editorParams, { setOptions: _this.props.editorParams }));
                     } }, this.props.children));
             };
@@ -3604,7 +3618,8 @@ var Serenity;
                 var props = Q.extend({
                     idPrefix: this.props.idPrefix,
                     localTextPrefix: this.props.localTextPrefix,
-                    key: item.name
+                    key: item.name,
+                    namedRef: this.props.namedRef
                 }, item);
                 if (this.props.renderField != null) {
                     var content = this.props.renderField(props);
@@ -3795,7 +3810,8 @@ var Serenity;
                     categoryOrder: this.props.categoryOrder,
                     defaultCategory: this.props.defaultCategory,
                     renderCategory: this.props.renderCategory,
-                    renderField: this.props.renderField
+                    renderField: this.props.renderField,
+                    namedRef: this.props.namedRef
                 };
                 if (this.props.renderCategories) {
                     var content = this.props.renderCategories(group.key, props);
@@ -3814,6 +3830,47 @@ var Serenity;
             return PropertyTabs;
         }(React.Component));
         UI.PropertyTabs = PropertyTabs;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var IntraPropertyGrid = /** @class */ (function (_super) {
+            __extends(IntraPropertyGrid, _super);
+            function IntraPropertyGrid() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            IntraPropertyGrid.prototype.render = function () {
+                var useTabs = Q.any(this.props.items || [], function (x) {
+                    return !Q.isEmptyOrNull(x.tab);
+                });
+                if (useTabs)
+                    return React.createElement(UI.PropertyTabs, this.props);
+                var useCategories = this.props.useCategories !== false && Q.any(this.props.items, function (x) {
+                    return !Q.isEmptyOrNull(x.category);
+                });
+                if (useCategories) {
+                    React.createElement(React.Fragment, null,
+                        React.createElement(UI.CategoryLinks, this.props),
+                        React.createElement(UI.Categories, this.props));
+                }
+                return (React.createElement("div", { className: "categories" }, React.createElement(UI.Category, this.props)));
+            };
+            return IntraPropertyGrid;
+        }(React.Component));
+        UI.IntraPropertyGrid = IntraPropertyGrid;
+        var PropertyGrid = /** @class */ (function (_super) {
+            __extends(PropertyGrid, _super);
+            function PropertyGrid() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            PropertyGrid.prototype.render = function () {
+                return (React.createElement("div", { className: "s-PropertyGrid" }, _super.prototype.render.call(this)));
+            };
+            return PropertyGrid;
+        }(IntraPropertyGrid));
+        UI.PropertyGrid = PropertyGrid;
     })(UI = Serenity.UI || (Serenity.UI = {}));
 })(Serenity || (Serenity = {}));
 var Serenity;
@@ -10625,6 +10682,7 @@ var Serenity;
         __extends(PropertyGrid, _super);
         function PropertyGrid(div, opt) {
             var _this = _super.call(this, div, opt) || this;
+            _this.namedRefs = new Serenity.UI.NamedRefs;
             if (opt.mode == null)
                 opt.mode = 1;
             div.addClass('s-PropertyGrid');
@@ -10681,6 +10739,7 @@ var Serenity;
             return _this;
         }
         PropertyGrid.prototype.destroy = function () {
+            this.namedRefs = null;
             if (this.editors != null) {
                 for (var i = 0; i < this.editors.length; i++) {
                     this.editors[i] != null && this.editors[i].destroy();
@@ -17224,41 +17283,20 @@ var Serenity;
 (function (Serenity) {
     var UI;
     (function (UI) {
-        var IntraPropertyGrid = /** @class */ (function (_super) {
-            __extends(IntraPropertyGrid, _super);
-            function IntraPropertyGrid() {
-                return _super !== null && _super.apply(this, arguments) || this;
+        var NamedRefs = /** @class */ (function () {
+            function NamedRefs() {
+                this.refs = {};
+                this.setRef = this.setRef.bind(this);
             }
-            IntraPropertyGrid.prototype.render = function () {
-                var useTabs = Q.any(this.props.items || [], function (x) {
-                    return !Q.isEmptyOrNull(x.tab);
-                });
-                if (useTabs)
-                    return React.createElement(UI.PropertyTabs, this.props);
-                var useCategories = this.props.useCategories !== false && Q.any(this.props.items, function (x) {
-                    return !Q.isEmptyOrNull(x.category);
-                });
-                if (useCategories) {
-                    React.createElement(React.Fragment, null,
-                        React.createElement(UI.CategoryLinks, this.props),
-                        React.createElement(UI.Categories, this.props));
-                }
-                return (React.createElement("div", { className: "categories" }, React.createElement(UI.Category, this.props)));
+            NamedRefs.prototype.getRef = function (name) {
+                return this.refs[name];
             };
-            return IntraPropertyGrid;
-        }(React.Component));
-        UI.IntraPropertyGrid = IntraPropertyGrid;
-        var PropertyGrid = /** @class */ (function (_super) {
-            __extends(PropertyGrid, _super);
-            function PropertyGrid() {
-                return _super !== null && _super.apply(this, arguments) || this;
-            }
-            PropertyGrid.prototype.render = function () {
-                return (React.createElement("div", { className: "s-PropertyGrid" }, _super.prototype.render.call(this)));
+            NamedRefs.prototype.setRef = function (name, ref) {
+                this.refs[name] = ref;
             };
-            return PropertyGrid;
-        }(IntraPropertyGrid));
-        UI.PropertyGrid = PropertyGrid;
+            return NamedRefs;
+        }());
+        UI.NamedRefs = NamedRefs;
     })(UI = Serenity.UI || (Serenity.UI = {}));
 })(Serenity || (Serenity = {}));
 //# sourceMappingURL=Serenity.CoreLib.js.map

@@ -5,6 +5,7 @@
 
         private editors: Widget<any>[];
         private items: PropertyItem[];
+        private namedRefs = new UI.NamedRefs;
 
         constructor(div: JQuery, opt: PropertyGridOptions) {
             super(div, opt);
@@ -76,6 +77,8 @@
         }
 
         destroy() {
+
+            this.namedRefs = null;
             if (this.editors != null) {
                 for (var i = 0; i < this.editors.length; i++) {
                     this.editors[i] != null && this.editors[i].destroy();

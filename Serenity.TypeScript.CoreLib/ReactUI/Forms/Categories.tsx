@@ -8,6 +8,7 @@
         localTextPrefix?: string;
         renderCategory?: (props: CategoryProps) => React.ReactNode;
         renderField?: (props: PropertyItem) => React.ReactNode;
+        namedRef?: (name: string, editor: any) => void;
     }
 
     export class Categories extends React.Component<CategoriesProps> {

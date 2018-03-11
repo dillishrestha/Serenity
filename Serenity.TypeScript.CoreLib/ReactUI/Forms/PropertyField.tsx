@@ -2,6 +2,7 @@
     export interface PropertyFieldProps extends Serenity.PropertyItem {
         idPrefix?: string
         localTextPrefix?: string;
+        namedRef?: (name: string, editor: any) => void;
     }
 
     export class PropertyField extends React.Component<PropertyFieldProps> {
@@ -70,6 +71,7 @@
                     htmlFor={this.getHtmlFor(EditorType)}
                     hint={this.getHint()}
                     required={this.props.required}
+                    namedRef={this.props.namedRef}
                     editor={ed =>
                         <EditorType {...ed}
                             maxlength={this.getMaxLength()}

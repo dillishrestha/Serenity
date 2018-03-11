@@ -14,6 +14,7 @@
         label?: ((p: LabelProps) => JSX.Element);
         htmlFor?: string;
         editor?: ((p: EditorRenderProps) => JSX.Element);
+        namedRef?: (name: string, editor: any) => void;
         hint?: string;
         required?: boolean;
         vx?: boolean;
@@ -25,9 +26,18 @@
         id?: string;
         editor?: ((p: EditorRenderProps) => JSX.Element);
         required?: boolean;
+        ref?: (name: string, editor: any) => void;
     }
 
     export class Field extends React.Component<FieldProps> {
+
+        private namedRef: any;
+
+        componentWillReceiveProps(nextProps: FieldProps, nextContext?: any): void {
+            if (nextProps != null && nextProps.namedRef !== this.props.namedRef) {
+                this.namedRef = null;
+            }
+        }
 
         render() {
             var props = this.props;
@@ -56,11 +66,21 @@
                 className += " " + props.className;
             }
 
+            var name = props.name;
+            if (this.props.namedRef != null &&
+                this.namedRef == null) {
+                var namedRef = this.props.namedRef;
+                this.namedRef = function (x: any) {
+                    namedRef(name, x);
+                };
+            }
+
             var editorProps: EditorProps = {
                 className: "editor",
-                name: this.props.name,
+                name: name,
                 id: this.props.id,
-                required: this.props.required
+                required: this.props.required,
+                ref: this.namedRef
             }
 
             return (

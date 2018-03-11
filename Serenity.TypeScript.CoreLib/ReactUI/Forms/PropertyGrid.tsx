@@ -10,6 +10,7 @@
         renderCategories?: (tab: string, props: UI.CategoriesProps) => React.ReactNode;
         renderCategory?: (props: UI.CategoryProps) => React.ReactNode;
         renderField?: (props: PropertyItem) => React.ReactNode;
+        namedRef?: (name: string, editor: any) => void;
     }
 }
 

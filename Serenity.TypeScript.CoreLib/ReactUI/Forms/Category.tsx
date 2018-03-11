@@ -8,6 +8,7 @@
         localTextPrefix?: string;
         items?: PropertyItem[];
         renderField?: (props: PropertyItem) => React.ReactNode;
+        namedRef?: (name: string, editor: any) => void;
     }
 
     export class Category extends React.Component<CategoryProps, Partial<CategoryProps>> {
@@ -73,7 +74,8 @@
             var props = Q.extend({
                 idPrefix: this.props.idPrefix,
                 localTextPrefix: this.props.localTextPrefix,
-                key: item.name
+                key: item.name,
+                namedRef: this.props.namedRef
             }, item);
 
             if (this.props.renderField != null) {
