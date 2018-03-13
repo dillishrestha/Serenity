@@ -104,7 +104,7 @@ namespace Serenity {
 
     @Attr('DialogType')
     export class DialogTypeAttribute {
-        constructor(public value: Function) {
+        constructor(public value: WidgetDialogClass) {
         }
     }
 

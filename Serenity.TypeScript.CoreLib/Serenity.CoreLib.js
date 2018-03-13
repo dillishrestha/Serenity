@@ -3433,8 +3433,11 @@ var Serenity;
                 return htmlFor;
             };
             PropertyField.prototype.getEditorType = function () {
-                return Serenity.EditorTypeRegistry
-                    .get(Q.coalesce(this.props.editorType, 'String'));
+                if (this.props.editorType == null)
+                    return Serenity.StringEditor;
+                if (typeof this.props.editorType == "string")
+                    return Serenity.EditorTypeRegistry.get(this.props.editorType);
+                return this.props.editorType;
             };
             PropertyField.prototype.getEditorId = function () {
                 return (this.props.idPrefix || "") + (this.props.name || "");

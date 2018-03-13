@@ -827,8 +827,8 @@ declare namespace Serenity {
         constructor(value: any);
     }
     class DialogTypeAttribute {
-        value: Function;
-        constructor(value: Function);
+        value: WidgetDialogClass;
+        constructor(value: WidgetDialogClass);
     }
     class EditorAttribute {
         constructor();
@@ -1063,7 +1063,7 @@ declare namespace Serenity.UI {
         getPlaceHolder(): string;
         getClassName(): string;
         getHtmlFor(editorType: any): null;
-        getEditorType(): any;
+        getEditorType(): React.ComponentClass<any> | React.StatelessComponent<any> | typeof StringEditor | WidgetClass<object>;
         getEditorId(): string;
         getMaxLength(): number;
         render(): JSX.Element;
@@ -1390,6 +1390,13 @@ declare namespace Serenity {
 declare namespace Serenity {
     class IAsyncInit {
     }
+    interface WidgetClass<TOptions = object> {
+        new (element: JQuery, options?: TOptions): Widget<TOptions>;
+    }
+    interface WidgetDialogClass<TOptions = object> {
+        new (options?: TOptions): Widget<TOptions> & IDialog;
+    }
+    type AnyWidgetClass<TOptions = object> = WidgetClass<TOptions> | WidgetDialogClass<TOptions>;
     class Widget<TOptions> extends React.Component<TOptions, any> {
         private static nextWidgetNumber;
         element: JQuery;
@@ -1506,12 +1513,13 @@ declare namespace Serenity {
     }
 }
 declare namespace Serenity {
+    type Constructor<T> = new (...args: any[]) => T;
     interface PropertyItem {
         name?: string;
         title?: string;
         hint?: string;
         placeholder?: string;
-        editorType?: string;
+        editorType?: string | React.ComponentType<any>;
         editorParams?: any;
         category?: string;
         collapsible?: boolean;
@@ -1760,7 +1768,7 @@ declare namespace Serenity {
 }
 declare namespace Serenity {
     namespace EditorTypeRegistry {
-        function get(key: string): Function;
+        function get(key: string): WidgetClass;
         function reset(): void;
     }
     namespace EditorUtils {
@@ -2253,7 +2261,7 @@ declare namespace Serenity {
     }
     interface QuickFilter<TWidget extends Widget<TOptions>, TOptions> {
         field?: string;
-        type?: new (element: JQuery, options: TOptions) => TWidget;
+        type?: WidgetClass;
         handler?: (h: QuickFilterArgs<TWidget>) => void;
         title?: string;
         options?: TOptions;
@@ -2541,7 +2549,7 @@ declare namespace Serenity {
 }
 declare namespace Serenity {
     interface CreateWidgetParams<TWidget extends Widget<TOptions>, TOptions> {
-        type?: new (element: JQuery, options?: TOptions) => TWidget;
+        type?: AnyWidgetClass;
         options?: TOptions;
         container?: JQuery;
         element?: (e: JQuery) => void;
@@ -3570,6 +3578,6 @@ declare namespace Serenity.DialogExtensions {
     function dialogCloseOnEnter(dialog: JQuery): JQuery;
 }
 declare namespace Serenity.DialogTypeRegistry {
-    function tryGet(key: string): Function;
-    function get(key: string): Function;
+    function tryGet(key: string): WidgetDialogClass;
+    function get(key: string): WidgetDialogClass;
 }

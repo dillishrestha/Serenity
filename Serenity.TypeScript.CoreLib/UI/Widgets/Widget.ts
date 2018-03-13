@@ -4,6 +4,16 @@
     export class IAsyncInit {
     }
 
+    export interface WidgetClass<TOptions = object> {
+        new(element: JQuery, options?: TOptions): Widget<TOptions>;
+    }
+
+    export interface WidgetDialogClass<TOptions = object> {
+        new(options?: TOptions): Widget<TOptions> & IDialog;
+    }
+
+    export type AnyWidgetClass<TOptions = object> = WidgetClass<TOptions> | WidgetDialogClass<TOptions>;
+
     @Serenity.Decorators.registerClass()
     export class Widget<TOptions> extends React.Component<TOptions, any> {
         private static nextWidgetNumber = 0;

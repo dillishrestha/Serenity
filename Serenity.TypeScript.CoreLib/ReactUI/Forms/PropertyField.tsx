@@ -46,8 +46,13 @@
         }
 
         getEditorType() {
-            return Serenity.EditorTypeRegistry
-                .get(Q.coalesce(this.props.editorType, 'String')) as any;
+            if (this.props.editorType == null)
+                return Serenity.StringEditor;
+
+            if (typeof this.props.editorType == "string")
+                return Serenity.EditorTypeRegistry.get(this.props.editorType);
+
+            return this.props.editorType;
         }
 
         getEditorId() {

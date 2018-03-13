@@ -3,9 +3,9 @@
     import Option = Serenity.Decorators.option
 
     export namespace EditorTypeRegistry {
-        let knownTypes: Q.Dictionary<Function>;
+        let knownTypes: Q.Dictionary<WidgetClass>;
 
-        export function get(key: string): Function {
+        export function get(key: string): WidgetClass {
 
             if (Q.isEmptyOrNull(key)) {
                 throw new (ss as any).ArgumentNullException('key');
