@@ -4222,6 +4222,204 @@ var Serenity;
 (function (Serenity) {
     var UI;
     (function (UI) {
+        var FormDataSource = /** @class */ (function (_super) {
+            __extends(FormDataSource, _super);
+            function FormDataSource(props, context) {
+                var _this = _super.call(this, props, context) || this;
+                _this.emptyEntity = Object.create(null);
+                var entity = _this.props.entity;
+                _this.state = {
+                    formMode: _this.modeFor(entity),
+                    entity: entity
+                };
+                if (_this.props.entityId != null)
+                    _this.loadById(_this.props.entityId);
+                _this.delete = _this.delete.bind(_this);
+                _this.save = _this.save.bind(_this);
+                return _this;
+            }
+            FormDataSource.prototype.componentWillReceiveProps = function (nextProps) {
+                if (nextProps.entityId !== this.props.entityId) {
+                    if (nextProps.entityId == null) {
+                        this.loadEntity(nextProps.entity || Object.create(null));
+                    }
+                    else {
+                        this.loadById(nextProps.entityId);
+                    }
+                }
+                else if (nextProps.entity != this.props.entity) {
+                    this.loadEntity(nextProps.entity || Object.create(null));
+                }
+            };
+            FormDataSource.prototype.componentDidMount = function () {
+                this.canSetState = true;
+                if (this.pendingEntity !== undefined) {
+                    this.loadEntity(this.pendingEntity || Object.create(null));
+                }
+            };
+            FormDataSource.prototype.componentWillUnmount = function () {
+                this.canSetState = false;
+            };
+            FormDataSource.prototype.loadEntity = function (entity) {
+                if (this.canSetState) {
+                    this.setState({
+                        formMode: this.modeFor(entity),
+                        entity: entity
+                    });
+                    this.pendingEntity = undefined;
+                }
+                else {
+                    this.pendingEntity = entity || null;
+                }
+            };
+            FormDataSource.prototype.loadResponse = function (response) {
+                this.loadEntity(response.Entity);
+            };
+            FormDataSource.prototype.getLoadByIdRequest = function (entityId) {
+                return {
+                    EntityId: entityId
+                };
+            };
+            FormDataSource.prototype.getServiceFor = function (method) {
+                var service = this.props[method.charAt(0).toLowerCase() + method.substr(1) + "Service"];
+                if (service != null)
+                    return service;
+                return (this.props.service || "ServiceNotSet!") + "/" + method;
+            };
+            FormDataSource.prototype.getLoadByIdOptions = function (entityId) {
+                return {
+                    service: this.getServiceFor("Retrieve"),
+                    request: this.getLoadByIdRequest(entityId)
+                };
+            };
+            FormDataSource.prototype.loadById = function (entityId) {
+                var _this = this;
+                var options = this.getLoadByIdOptions(entityId);
+                return Q.serviceCall(options).then(function (response) {
+                    _this.loadResponse(response);
+                    return response;
+                });
+            };
+            FormDataSource.prototype.isDeleted = function (entity) {
+                if (this.props.isDeletedProperty && entity[this.props.isDeletedProperty])
+                    return true;
+                if (this.props.isActiveProperty && entity[this.props.isActiveProperty] === -1)
+                    return true;
+            };
+            FormDataSource.prototype.modeFor = function (entity) {
+                if (entity == null)
+                    return UI.FormMode.Initial;
+                if (this.props.readOnly)
+                    return UI.FormMode.View;
+                if (this.props.idProperty && entity[this.props.idProperty] != null)
+                    return UI.FormMode.Edit;
+                if (this.isDeleted(entity))
+                    return UI.FormMode.Deleted;
+            };
+            FormDataSource.prototype.isEditMode = function () {
+                return this.state.formMode == UI.FormMode.Edit;
+            };
+            FormDataSource.prototype.getSaveEntity = function (values) {
+                return values;
+            };
+            FormDataSource.prototype.getSaveOptions = function (values) {
+                var opt = {};
+                opt.service = this.getServiceFor(this.isEditMode() ? "Update" : "Create");
+                opt.request = this.getSaveRequest(values);
+                return opt;
+            };
+            FormDataSource.prototype.getIdProperty = function () {
+                return this.props.idProperty || "NoIdProperty!";
+            };
+            FormDataSource.prototype.getLanguages = function () {
+                if (Serenity.EntityDialog.defaultLanguageList != null)
+                    return Serenity.EntityDialog.defaultLanguageList() || [];
+                return [];
+            };
+            FormDataSource.prototype.getPendingLocalizations = function () {
+                if (this.state.localizations == null) {
+                    return null;
+                }
+                var result = {};
+                var idField = this.getIdProperty();
+                var langs = this.getLanguages();
+                for (var _i = 0, langs_1 = langs; _i < langs_1.length; _i++) {
+                    var pair = langs_1[_i];
+                    var language = pair[0];
+                    var entity = {};
+                    if (idField != null) {
+                        entity[idField] = this.entity[this.getIdProperty()];
+                    }
+                    var prefix = language + '$';
+                    for (var _a = 0, _b = Object.keys(this.state.localizations); _a < _b.length; _a++) {
+                        var k = _b[_a];
+                        if (Q.startsWith(k, prefix))
+                            entity[k.substr(prefix.length)] = this.state.localizations[k];
+                    }
+                    result[language] = entity;
+                }
+                return result;
+            };
+            FormDataSource.prototype.getSaveRequest = function (values) {
+                var entity = this.getSaveEntity(values);
+                var req = {};
+                req.Entity = entity;
+                if (this.isEditMode()) {
+                    var idField = this.getIdProperty();
+                    if (idField != null) {
+                        req.EntityId = this.entity[this.props.idProperty];
+                    }
+                }
+                if (this.state.localizations != null) {
+                    req.Localizations = this.getPendingLocalizations();
+                }
+                return req;
+            };
+            FormDataSource.prototype.save = function (values) {
+                var options = this.getSaveOptions(values);
+                return Q.serviceCall(options);
+            };
+            FormDataSource.prototype.delete = function () {
+                return null;
+            };
+            FormDataSource.prototype.undelete = function () {
+                return null;
+            };
+            FormDataSource.prototype.getDataModel = function () {
+                return {
+                    entity: this.state.entity || this.emptyEntity,
+                    formMode: this.state.formMode,
+                    onSave: (this.state.formMode == UI.FormMode.Edit || this.state.formMode == UI.FormMode.New) ? this.save : null,
+                    onDelete: this.state.formMode == UI.FormMode.Edit ? this.delete : null,
+                    onUndelete: this.state.formMode == UI.FormMode.Deleted ? this.undelete : null
+                };
+            };
+            Object.defineProperty(FormDataSource.prototype, "dataModel", {
+                get: function () {
+                    return this.getDataModel();
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(FormDataSource.prototype, "entity", {
+                get: function () {
+                    return this.pendingEntity !== undefined ? this.pendingEntity : this.state.entity;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            FormDataSource.prototype.render = function () {
+                return this.props.view(this.getDataModel());
+            };
+            return FormDataSource;
+        }(React.Component));
+        UI.FormDataSource = FormDataSource;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
         var FormView = /** @class */ (function (_super) {
             __extends(FormView, _super);
             function FormView() {
@@ -4290,11 +4488,16 @@ var Serenity;
                 var _this = this;
                 if (this.props.onSave == null)
                     return Promise.reject("No onSave handler!");
-                var newValues = Object.create(null);
-                this.editors.saveTo(newValues);
-                var promise = this.props.onSave(this.props.entity, newValues);
-                if (close && this.props.onClose != null)
-                    promise = promise.then(function (e) { return _this.props.onClose != null && _this.props.onClose(); });
+                var values = Object.create(null);
+                this.editors.saveTo(values);
+                var promise = this.props.onSave(values);
+                if (close) {
+                    if (this.props.onClose != null)
+                        promise = promise.then(function (e) { return _this.props.onClose != null && _this.props.onClose(); });
+                }
+                else if (this.props.onReload != null) {
+                    promise = promise.then(function (e) { return _this.props.onReload != null && _this.props.onReload(); });
+                }
                 return promise;
             };
             return FormView;
@@ -14553,8 +14756,8 @@ var Serenity;
                     items.push(copy);
                     if (langs == null)
                         langs = this.getLangs();
-                    for (var _b = 0, langs_1 = langs; _b < langs_1.length; _b++) {
-                        var lang = langs_1[_b];
+                    for (var _b = 0, langs_2 = langs; _b < langs_2.length; _b++) {
+                        var lang = langs_2[_b];
                         copy = $.extend({}, item1);
                         copy.name = lang[0] + '$' + copy.name;
                         copy.title = lang[1];
@@ -14693,8 +14896,8 @@ var Serenity;
             var result = {};
             var idField = this.getIdProperty();
             var langs = this.getLangs();
-            for (var _i = 0, langs_2 = langs; _i < langs_2.length; _i++) {
-                var pair = langs_2[_i];
+            for (var _i = 0, langs_3 = langs; _i < langs_3.length; _i++) {
+                var pair = langs_3[_i];
                 var language = pair[0];
                 var entity = {};
                 if (idField != null) {
@@ -17458,130 +17661,5 @@ var Serenity;
         }
         DialogTypeRegistry.get = get;
     })(DialogTypeRegistry = Serenity.DialogTypeRegistry || (Serenity.DialogTypeRegistry = {}));
-})(Serenity || (Serenity = {}));
-var Serenity;
-(function (Serenity) {
-    var UI;
-    (function (UI) {
-        var FormDataSource = /** @class */ (function (_super) {
-            __extends(FormDataSource, _super);
-            function FormDataSource(props, context) {
-                var _this = _super.call(this, props, context) || this;
-                _this.emptyEntity = Object.create(null);
-                var entity = _this.props.entity;
-                _this.state = {
-                    formMode: _this.modeFor(entity),
-                    entity: entity
-                };
-                if (_this.props.entityId != null)
-                    _this.loadById(_this.props.entityId);
-                _this.delete = _this.delete.bind(_this);
-                return _this;
-            }
-            FormDataSource.prototype.componentWillReceiveProps = function (nextProps) {
-                if (nextProps.entityId !== this.props.entityId) {
-                    if (nextProps.entityId == null) {
-                        this.loadEntity(nextProps.entity || Object.create(null));
-                    }
-                    else {
-                        this.loadById(nextProps.entityId);
-                    }
-                }
-                else if (nextProps.entity != this.props.entity) {
-                    this.loadEntity(nextProps.entity || Object.create(null));
-                }
-            };
-            FormDataSource.prototype.componentDidMount = function () {
-                this.canSetState = true;
-                if (this.pendingEntity !== undefined) {
-                    this.loadEntity(this.pendingEntity || Object.create(null));
-                }
-            };
-            FormDataSource.prototype.componentWillUnmount = function () {
-                this.canSetState = false;
-            };
-            FormDataSource.prototype.loadEntity = function (entity) {
-                if (this.canSetState) {
-                    this.setState({
-                        formMode: this.modeFor(entity),
-                        entity: entity
-                    });
-                    this.pendingEntity = undefined;
-                }
-                else {
-                    this.pendingEntity = entity || null;
-                }
-            };
-            FormDataSource.prototype.loadResponse = function (response) {
-                this.loadEntity(response.Entity);
-            };
-            FormDataSource.prototype.getLoadByIdRequest = function (entityId) {
-                return {
-                    EntityId: entityId
-                };
-            };
-            FormDataSource.prototype.getLoadByIdOptions = function (entityId) {
-                return {
-                    service: this.props.retrieveUrl ? null : (this.props.service || "ServiceNotSet!") + "/Retrieve",
-                    url: this.props.retrieveUrl,
-                    request: this.getLoadByIdRequest(entityId)
-                };
-            };
-            FormDataSource.prototype.loadById = function (entityId) {
-                var _this = this;
-                var options = this.getLoadByIdOptions(entityId);
-                return Q.serviceCall(options).then(function (response) {
-                    _this.loadResponse(response);
-                    return response;
-                });
-            };
-            FormDataSource.prototype.isDeleted = function (entity) {
-                if (this.props.isDeletedProperty && entity[this.props.isDeletedProperty])
-                    return true;
-                if (this.props.isActiveProperty && entity[this.props.isActiveProperty] === -1)
-                    return true;
-            };
-            FormDataSource.prototype.modeFor = function (entity) {
-                if (entity == null)
-                    return UI.FormMode.Initial;
-                if (this.props.readOnly)
-                    return UI.FormMode.View;
-                if (this.props.idProperty && entity[this.props.idProperty] != null)
-                    return UI.FormMode.Edit;
-                if (this.isDeleted(entity))
-                    return UI.FormMode.Deleted;
-            };
-            FormDataSource.prototype.save = function (entity, newValues) {
-                return null;
-            };
-            FormDataSource.prototype.delete = function (entity) {
-                return null;
-            };
-            FormDataSource.prototype.undelete = function () {
-                return null;
-            };
-            FormDataSource.prototype.dataModel = function () {
-                return {
-                    entity: this.state.entity || this.emptyEntity,
-                    formMode: this.state.formMode,
-                    onSave: (this.state.formMode == UI.FormMode.Edit || this.state.formMode == UI.FormMode.New) ? this.save : null,
-                    onDelete: this.state.formMode == UI.FormMode.Edit ? this.delete : null,
-                    onUndelete: this.state.formMode == UI.FormMode.Deleted ? this.undelete : null
-                };
-            };
-            Object.defineProperty(FormDataSource.prototype, "entity", {
-                get: function () {
-                    return this.pendingEntity !== undefined ? this.pendingEntity : this.props.entity;
-                },
-                enumerable: true,
-                configurable: true
-            });
-            FormDataSource.prototype.render = function () {
-                return this.props.view(this.dataModel());
-            };
-            return FormDataSource;
-        }(React.Component));
-        UI.FormDataSource = FormDataSource;
-    })(UI = Serenity.UI || (Serenity.UI = {}));
 })(Serenity || (Serenity = {}));
 //# sourceMappingURL=Serenity.CoreLib.js.map

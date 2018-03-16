@@ -2,8 +2,9 @@
     export interface FormDataModel<TEntity> {
         entity: TEntity;
         formMode: FormMode;
-        onSave?: (entity: TEntity, newValues: Partial<TEntity>) => PromiseLike<void>;
-        onDelete?: (entity: TEntity) => PromiseLike<void>;
-        onUndelete?: (entity: TEntity) => PromiseLike<void>;
+        onSave?: (values: TEntity) => PromiseLike<void>;
+        onDelete?: () => PromiseLike<void>;
+        onUndelete?: () => PromiseLike<void>;
+        onReload?: () => PromiseLike<void>;
     }
 }

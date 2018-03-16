@@ -1298,6 +1298,67 @@ declare namespace Serenity.UI {
     }
 }
 declare namespace Serenity.UI {
+    interface FormDataModel<TEntity> {
+        entity: TEntity;
+        formMode: FormMode;
+        onSave?: (values: TEntity) => PromiseLike<void>;
+        onDelete?: () => PromiseLike<void>;
+        onUndelete?: () => PromiseLike<void>;
+        onReload?: () => PromiseLike<void>;
+    }
+}
+declare namespace Serenity.UI {
+    interface FormDataSourceProps<TEntity> {
+        service?: string;
+        retrieveService?: string;
+        createService?: string;
+        updateService?: string;
+        entityId?: any;
+        entity?: TEntity;
+        idProperty: string;
+        isActiveProperty?: string;
+        isDeletedProperty?: string;
+        readOnly?: boolean;
+        view?: (model: FormDataModel<TEntity>) => React.ReactNode;
+    }
+    interface FormDataSourceState<TEntity> {
+        entity: TEntity;
+        formMode: FormMode;
+        localizations?: any;
+    }
+    class FormDataSource<TEntity> extends React.Component<FormDataSourceProps<TEntity>, FormDataSourceState<TEntity>> {
+        private emptyEntity;
+        private pendingEntity;
+        private canSetState;
+        constructor(props: FormDataSourceProps<TEntity>, context?: any);
+        componentWillReceiveProps(nextProps: FormDataSourceProps<TEntity>): void;
+        componentDidMount(): void;
+        componentWillUnmount(): void;
+        loadEntity(entity: TEntity): void;
+        loadResponse(response: RetrieveResponse<TEntity>): void;
+        getLoadByIdRequest(entityId: any): RetrieveRequest;
+        getServiceFor(method: string): string;
+        getLoadByIdOptions(entityId: any): ServiceOptions<RetrieveResponse<TEntity>>;
+        loadById(entityId: any): PromiseLike<RetrieveResponse<TEntity>>;
+        isDeleted(entity: TEntity): boolean;
+        modeFor(entity: TEntity): FormMode.Initial | FormMode.Edit | FormMode.View | FormMode.Deleted;
+        isEditMode(): boolean;
+        getSaveEntity(values: TEntity): TEntity;
+        getSaveOptions(values: TEntity): ServiceOptions<SaveResponse>;
+        getIdProperty(): string;
+        protected getLanguages(): any[];
+        protected getPendingLocalizations(): any;
+        getSaveRequest(values: TEntity): SaveRequest<TEntity>;
+        save(values: TEntity): PromiseLike<void>;
+        delete(): PromiseLike<void>;
+        undelete(): PromiseLike<void>;
+        getDataModel(): FormDataModel<TEntity>;
+        readonly dataModel: FormDataModel<TEntity>;
+        readonly entity: TEntity;
+        render(): React.ReactNode;
+    }
+}
+declare namespace Serenity.UI {
     interface FormViewProps<TEntity> extends FormDataModel<TEntity> {
         onClose?: () => void;
     }
@@ -3642,52 +3703,4 @@ declare namespace Serenity.DialogExtensions {
 declare namespace Serenity.DialogTypeRegistry {
     function tryGet(key: string): WidgetDialogClass;
     function get(key: string): WidgetDialogClass;
-}
-declare namespace Serenity.UI {
-    interface FormDataModel<TEntity> {
-        entity: TEntity;
-        formMode: FormMode;
-        onSave?: (entity: TEntity, newValues: Partial<TEntity>) => PromiseLike<void>;
-        onDelete?: (entity: TEntity) => PromiseLike<void>;
-        onUndelete?: (entity: TEntity) => PromiseLike<void>;
-    }
-}
-declare namespace Serenity.UI {
-    interface FormDataSourceProps<TEntity> {
-        service?: string;
-        retrieveUrl?: string;
-        entityId?: any;
-        entity?: TEntity;
-        idProperty: string;
-        isActiveProperty?: string;
-        isDeletedProperty?: string;
-        readOnly?: boolean;
-        view?: (model: FormDataModel<TEntity>) => React.ReactNode;
-    }
-    interface FormDataSourceState<TEntity> {
-        entity: TEntity;
-        formMode: FormMode;
-    }
-    class FormDataSource<TEntity> extends React.Component<FormDataSourceProps<TEntity>, FormDataSourceState<TEntity>> {
-        private emptyEntity;
-        private pendingEntity;
-        private canSetState;
-        constructor(props: FormDataSourceProps<TEntity>, context?: any);
-        componentWillReceiveProps(nextProps: FormDataSourceProps<TEntity>): void;
-        componentDidMount(): void;
-        componentWillUnmount(): void;
-        loadEntity(entity: TEntity): void;
-        loadResponse(response: RetrieveResponse<TEntity>): void;
-        getLoadByIdRequest(entityId: any): RetrieveRequest;
-        getLoadByIdOptions(entityId: any): ServiceOptions<RetrieveResponse<TEntity>>;
-        loadById(entityId: any): PromiseLike<RetrieveResponse<TEntity>>;
-        isDeleted(entity: TEntity): boolean;
-        modeFor(entity: TEntity): FormMode.Initial | FormMode.Edit | FormMode.View | FormMode.Deleted;
-        save(entity: TEntity, newValues: Partial<TEntity>): PromiseLike<void>;
-        delete(entity: TEntity): PromiseLike<void>;
-        undelete(): PromiseLike<void>;
-        dataModel(): FormDataModel<TEntity>;
-        readonly entity: TEntity;
-        render(): React.ReactNode;
-    }
 }

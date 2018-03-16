@@ -86,13 +86,18 @@
             if (this.props.onSave == null)
                 return Promise.reject("No onSave handler!");
 
-            var newValues: TEntity = Object.create(null);
-            this.editors.saveTo(newValues);
+            var values: TEntity = Object.create(null);
+            this.editors.saveTo(values);
 
-            var promise = this.props.onSave(this.props.entity, newValues);
+            var promise = this.props.onSave(values);
 
-            if (close && this.props.onClose != null)
-                promise = promise.then(e => this.props.onClose != null && this.props.onClose());
+            if (close) {
+                if (this.props.onClose != null)
+                    promise = promise.then(e => this.props.onClose != null && this.props.onClose());
+            }
+            else if (this.props.onReload != null) {
+                promise = promise.then(e => this.props.onReload != null && this.props.onReload());
+            }
 
             return promise;
         }

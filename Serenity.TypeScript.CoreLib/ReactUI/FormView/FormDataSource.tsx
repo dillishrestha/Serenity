@@ -2,7 +2,9 @@
 
     export interface FormDataSourceProps<TEntity> {
         service?: string;
-        retrieveUrl?: string;
+        retrieveService?: string;
+        createService?: string;
+        updateService?: string;
         entityId?: any;
         entity?: TEntity;
         idProperty: string;
@@ -15,6 +17,7 @@
     export interface FormDataSourceState<TEntity> {
         entity: TEntity;
         formMode: FormMode;
+        localizations?: any;
     }
 
     export class FormDataSource<TEntity> extends React.Component<FormDataSourceProps<TEntity>, FormDataSourceState<TEntity>> {
@@ -37,6 +40,7 @@
                 this.loadById(this.props.entityId);
 
             this.delete = this.delete.bind(this);
+            this.save = this.save.bind(this);        
         }
 
         componentWillReceiveProps(nextProps: FormDataSourceProps<TEntity>) {
@@ -87,10 +91,18 @@
             }
         }
 
+        getServiceFor(method: string): string {
+
+            var service = this.props[method.charAt(0).toLowerCase() + method.substr(1) + "Service"];
+            if (service != null)
+                return service;
+
+            return (this.props.service || "ServiceNotSet!") + "/" + method;
+        }
+
         getLoadByIdOptions(entityId: any): ServiceOptions<RetrieveResponse<TEntity>> {
             return {
-                service: this.props.retrieveUrl ? null : (this.props.service || "ServiceNotSet!") + "/Retrieve"),
-                url: this.props.retrieveUrl,
+                service: this.getServiceFor("Retrieve"),
                 request: this.getLoadByIdRequest(entityId)
             }
         }
@@ -125,11 +137,89 @@
                 return FormMode.Deleted;
         }
 
-        save(entity: TEntity, newValues: Partial<TEntity>): PromiseLike<void> {
-            return null;
+        isEditMode() {
+            return this.state.formMode == FormMode.Edit;
         }
 
-        delete(entity: TEntity): PromiseLike<void> {
+        getSaveEntity(values: TEntity): TEntity {
+            return values;
+        }
+
+        getSaveOptions(values: TEntity): ServiceOptions<SaveResponse> {
+
+            var opt: Q.ServiceOptions<SaveResponse> = {};
+            opt.service = this.getServiceFor(this.isEditMode() ? "Update" : "Create");
+            opt.request = this.getSaveRequest(values);
+
+            return opt;
+        }
+
+        getIdProperty() {
+            return this.props.idProperty || "NoIdProperty!";
+        }
+
+        protected getLanguages(): any[] {
+            if (Serenity.EntityDialog.defaultLanguageList != null)
+                return Serenity.EntityDialog.defaultLanguageList() || [];
+
+            return [];
+        }
+
+        protected getPendingLocalizations(): any {
+            if (this.state.localizations == null) {
+                return null;
+            }
+
+            var result: Q.Dictionary<any> = {};
+            var idField = this.getIdProperty();
+            var langs = this.getLanguages();
+
+            for (var pair of langs) {
+                var language = pair[0];
+                var entity: any = {};
+
+                if (idField != null) {
+                    entity[idField] = this.entity[this.getIdProperty()];
+                }
+
+                var prefix = language + '$';
+
+                for (var k of Object.keys(this.state.localizations)) {
+                    if (Q.startsWith(k, prefix))
+                        entity[k.substr(prefix.length)] = this.state.localizations[k];
+                }
+
+                result[language] = entity;
+            }
+
+            return result;
+        }
+
+        getSaveRequest(values: TEntity) {
+            var entity = this.getSaveEntity(values);
+            var req: SaveRequest<TEntity> = {};
+            req.Entity = entity;
+
+            if (this.isEditMode()) {
+                var idField = this.getIdProperty();
+                if (idField != null) {
+                    req.EntityId = this.entity[this.props.idProperty];
+                }
+            }
+
+            if (this.state.localizations != null) {
+                req.Localizations = this.getPendingLocalizations();
+            }
+
+            return req;
+        }
+
+        save(values: TEntity): PromiseLike<void> {
+            var options = this.getSaveOptions(values);
+            return Q.serviceCall(options);
+        }
+
+        delete(): PromiseLike<void> {
             return null;
         }
 
@@ -137,7 +227,7 @@
             return null;
         }
 
-        dataModel(): FormDataModel<TEntity> {
+        getDataModel(): FormDataModel<TEntity> {
             return {
                 entity: this.state.entity || this.emptyEntity,
                 formMode: this.state.formMode,
@@ -147,12 +237,16 @@
             };
         }
 
+        get dataModel() {
+            return this.getDataModel();
+        }
+
         get entity() {
-            return this.pendingEntity !== undefined ? this.pendingEntity : this.props.entity;
+            return this.pendingEntity !== undefined ? this.pendingEntity : this.state.entity;
         }
 
         render() {
-            return this.props.view(this.dataModel());
+            return this.props.view(this.getDataModel());
         }
     }
 }
