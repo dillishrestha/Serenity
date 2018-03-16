@@ -10,7 +10,6 @@
         hotkeyAllowDefault?: boolean;
         hotkeyContext?: any;
         separator?: boolean;
-        disabled?: boolean;
     }
 
     export interface ToolbarOptions {
@@ -20,8 +19,13 @@
 
     export namespace UI {
 
+        export interface ToolButtonProps extends Serenity.ToolButton {
+            disabled?: boolean;
+            hidden?: boolean;
+        }
+
         @Decorators.registerClass("Serenity.UI.ToolButton")
-        export class ToolButton extends React.Component<Serenity.ToolButton> {
+        export class ToolButton extends React.Component<ToolButtonProps> {
 
             static buttonSelector = "div.tool-button";
 
@@ -38,7 +42,7 @@
                 return icon;
             }
 
-            static className(btn: Serenity.ToolButton) {
+            static className(btn: ToolButtonProps) {
                 return Q.cssClass({
                     "tool-button": true,
                     "icon-tool-button": !!btn.icon,
@@ -72,15 +76,17 @@
                 if (!klass && !btn.title)
                     return <span className="button-inner"></span>;
 
-                if (!btn.htmlEncode) {
-                    var h = (klass ? '<i class="' + Q.attrEncode(klass) + '"></i> ' : '') + btn.title;
+                var title = Q.coalesce(btn.title, '');
+
+                if (btn.htmlEncode === false) {
+                    var h = (klass ? '<i class="' + Q.attrEncode(klass) + '"></i> ' : '') + title;
                     return (<span className="button-inner" dangerouslySetInnerHTML={{ __html: h }}></span>);
                 }
 
                 if (!klass)
-                    return <span className="button-inner">{btn.title}</span>
+                    return <span className="button-inner">{title}</span>
 
-                return <span className="button-inner"><i className={klass} ></i>{btn.title}</span>
+                return <span className="button-inner"><i className={klass}></i> {title}</span>
             }
         }
 
@@ -138,7 +144,6 @@
                     <div className="tool-buttons" ref={el => this.el = el}>
                         <div className="buttons-outer">
                             {this.renderButtons(this.props.buttons || [])}
-                            {this.props.children}
                         </div>
                     </div>
                 );

@@ -6,10 +6,12 @@
 
     export interface WidgetClass<TOptions = object> {
         new(element: JQuery, options?: TOptions): Widget<TOptions>;
+        element: JQuery;
     }
 
     export interface WidgetDialogClass<TOptions = object> {
         new(options?: TOptions): Widget<TOptions> & IDialog;
+        element: JQuery;
     }
 
     export type AnyWidgetClass<TOptions = object> = WidgetClass<TOptions> | WidgetDialogClass<TOptions>;
@@ -149,14 +151,15 @@
     }
 
     export interface WidgetComponentProps<W extends Serenity.Widget<any>> {
-        id?: string | ((name: string) => string);
+        id?: string;
         name?: string;
-        class?: string;
+        className?: string;
         maxLength?: number;
         placeholder?: string;
         setOptions?: any;
         required?: boolean;
         readOnly?: boolean;
+        oneWay?: boolean;
         ref?: (el: W) => void;
     }
 

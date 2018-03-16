@@ -1,6 +1,6 @@
 ﻿namespace Serenity {
     export interface CreateWidgetParams<TWidget extends Widget<TOptions>, TOptions> {
-        type?: AnyWidgetClass;
+        type?: new (element: JQuery, options?: TOptions) => TWidget;
         options?: TOptions;
         container?: JQuery;
         element?: (e: JQuery) => void;

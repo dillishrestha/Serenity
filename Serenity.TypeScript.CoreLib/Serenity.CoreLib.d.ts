@@ -759,6 +759,7 @@ declare namespace Q {
 declare namespace Q {
     function initFormType(typ: Function, nameWidgetPairs: any[]): void;
     function prop(type: any, name: string, getter?: string, setter?: string): void;
+    function typeByFullName(fullName: string, global?: any): any;
 }
 declare namespace Q {
     namespace Authorization {
@@ -959,7 +960,7 @@ declare namespace Serenity {
 declare namespace Serenity.Decorators {
     function registerFormatter(nameOrIntf?: string | any[], intf2?: any[]): (target: Function) => void;
     function addAttribute(type: any, attr: any): void;
-    function dialogType(value: Function): (target: Function) => void;
+    function dialogType(value: WidgetDialogClass): (target: Function) => void;
     function editor(key?: string): (target: Function) => void;
     function element(value: string): (target: Function) => void;
     function enumKey(value: string): (target: Function) => void;
@@ -996,7 +997,7 @@ declare namespace Serenity.UI {
         setRef(name: string, ref: any): void;
         ref(name: string): ((ref: any) => void);
         loadFrom(source: any, names?: string[]): void;
-        saveTo(target: any, names?: string[]): void;
+        saveTo(target: any, names?: string[], ignoreOneWay?: boolean): void;
     }
 }
 declare namespace Serenity.UI {
@@ -1241,17 +1242,20 @@ declare namespace Serenity {
         hotkeyAllowDefault?: boolean;
         hotkeyContext?: any;
         separator?: boolean;
-        disabled?: boolean;
     }
     interface ToolbarOptions {
         buttons?: ToolButton[];
         hotkeyContext?: any;
     }
     namespace UI {
-        class ToolButton extends React.Component<Serenity.ToolButton> {
+        interface ToolButtonProps extends Serenity.ToolButton {
+            disabled?: boolean;
+            hidden?: boolean;
+        }
+        class ToolButton extends React.Component<ToolButtonProps> {
             static buttonSelector: string;
             static adjustIconClass(icon: string): string;
-            static className(btn: Serenity.ToolButton): string;
+            static className(btn: ToolButtonProps): string;
             handleClick(e: React.MouseEvent<any>): void;
             render(): JSX.Element;
             renderButtonText(): JSX.Element;
@@ -1268,6 +1272,61 @@ declare namespace Serenity {
         class Toolbar extends IntraToolbar {
             render(): JSX.Element;
         }
+    }
+}
+declare namespace Serenity.UI {
+    interface SaveButtonProps extends ToolButtonProps {
+        isUpdate?: boolean;
+    }
+    class SaveButton extends React.Component<SaveButtonProps> {
+        render(): JSX.Element;
+    }
+    class ApplyChangesButton extends React.Component<ToolButtonProps> {
+        render(): JSX.Element;
+    }
+    class DeleteButton extends React.Component<ToolButtonProps> {
+        render(): JSX.Element;
+    }
+}
+declare namespace Serenity.UI {
+    enum FormMode {
+        Initial = 0,
+        New = 1,
+        Edit = 2,
+        View = 3,
+        Deleted = 4,
+    }
+}
+declare namespace Serenity.UI {
+    interface FormViewProps<TEntity> extends FormDataModel<TEntity> {
+        onClose?: () => void;
+    }
+    class FormView<TEntity, TProps extends FormViewProps<TEntity> = FormViewProps<TEntity>, TState = any> extends React.Component<TProps, TState> {
+        protected editors: EditorRefs;
+        canSave(): boolean;
+        showSave(): boolean;
+        canClose(): boolean;
+        showApplyChanges(): boolean;
+        isUpdate(): boolean;
+        canDelete(): boolean;
+        showDelete(): boolean;
+        canUndelete(): boolean;
+        showUndelete(): boolean;
+        loadEntity(entity: TEntity): void;
+        componentDidMount(): void;
+        componentWillReceiveProps(nextProps: TProps): void;
+        renderSaveButton(): JSX.Element;
+        renderApplyChangesButton(): JSX.Element;
+        renderDeleteButton(): JSX.Element;
+        renderToolbar(children?: React.ReactNode): JSX.Element;
+        save(close?: boolean): PromiseLike<void>;
+    }
+}
+declare namespace Serenity.UI {
+    interface EntityDialogProps {
+        closable?: boolean;
+    }
+    class EntityDialog {
     }
 }
 declare namespace Serenity {
@@ -1392,9 +1451,11 @@ declare namespace Serenity {
     }
     interface WidgetClass<TOptions = object> {
         new (element: JQuery, options?: TOptions): Widget<TOptions>;
+        element: JQuery;
     }
     interface WidgetDialogClass<TOptions = object> {
         new (options?: TOptions): Widget<TOptions> & IDialog;
+        element: JQuery;
     }
     type AnyWidgetClass<TOptions = object> = WidgetClass<TOptions> | WidgetDialogClass<TOptions>;
     class Widget<TOptions> extends React.Component<TOptions, any> {
@@ -1423,14 +1484,15 @@ declare namespace Serenity {
         }> & Readonly<TOptions> & WidgetComponentProps<this>;
     }
     interface WidgetComponentProps<W extends Serenity.Widget<any>> {
-        id?: string | ((name: string) => string);
+        id?: string;
         name?: string;
-        class?: string;
+        className?: string;
         maxLength?: number;
         placeholder?: string;
         setOptions?: any;
         required?: boolean;
         readOnly?: boolean;
+        oneWay?: boolean;
         ref?: (el: W) => void;
     }
     interface Widget<TOptions> {
@@ -2261,7 +2323,7 @@ declare namespace Serenity {
     }
     interface QuickFilter<TWidget extends Widget<TOptions>, TOptions> {
         field?: string;
-        type?: WidgetClass;
+        type?: new (element: JQuery, options: TOptions) => TWidget;
         handler?: (h: QuickFilterArgs<TWidget>) => void;
         title?: string;
         options?: TOptions;
@@ -2549,7 +2611,7 @@ declare namespace Serenity {
 }
 declare namespace Serenity {
     interface CreateWidgetParams<TWidget extends Widget<TOptions>, TOptions> {
-        type?: AnyWidgetClass;
+        type?: new (element: JQuery, options?: TOptions) => TWidget;
         options?: TOptions;
         container?: JQuery;
         element?: (e: JQuery) => void;
@@ -3580,4 +3642,52 @@ declare namespace Serenity.DialogExtensions {
 declare namespace Serenity.DialogTypeRegistry {
     function tryGet(key: string): WidgetDialogClass;
     function get(key: string): WidgetDialogClass;
+}
+declare namespace Serenity.UI {
+    interface FormDataModel<TEntity> {
+        entity: TEntity;
+        formMode: FormMode;
+        onSave?: (entity: TEntity, newValues: Partial<TEntity>) => PromiseLike<void>;
+        onDelete?: (entity: TEntity) => PromiseLike<void>;
+        onUndelete?: (entity: TEntity) => PromiseLike<void>;
+    }
+}
+declare namespace Serenity.UI {
+    interface FormDataSourceProps<TEntity> {
+        service?: string;
+        retrieveUrl?: string;
+        entityId?: any;
+        entity?: TEntity;
+        idProperty: string;
+        isActiveProperty?: string;
+        isDeletedProperty?: string;
+        readOnly?: boolean;
+        view?: (model: FormDataModel<TEntity>) => React.ReactNode;
+    }
+    interface FormDataSourceState<TEntity> {
+        entity: TEntity;
+        formMode: FormMode;
+    }
+    class FormDataSource<TEntity> extends React.Component<FormDataSourceProps<TEntity>, FormDataSourceState<TEntity>> {
+        private emptyEntity;
+        private pendingEntity;
+        private canSetState;
+        constructor(props: FormDataSourceProps<TEntity>, context?: any);
+        componentWillReceiveProps(nextProps: FormDataSourceProps<TEntity>): void;
+        componentDidMount(): void;
+        componentWillUnmount(): void;
+        loadEntity(entity: TEntity): void;
+        loadResponse(response: RetrieveResponse<TEntity>): void;
+        getLoadByIdRequest(entityId: any): RetrieveRequest;
+        getLoadByIdOptions(entityId: any): ServiceOptions<RetrieveResponse<TEntity>>;
+        loadById(entityId: any): PromiseLike<RetrieveResponse<TEntity>>;
+        isDeleted(entity: TEntity): boolean;
+        modeFor(entity: TEntity): FormMode.Initial | FormMode.Edit | FormMode.View | FormMode.Deleted;
+        save(entity: TEntity, newValues: Partial<TEntity>): PromiseLike<void>;
+        delete(entity: TEntity): PromiseLike<void>;
+        undelete(): PromiseLike<void>;
+        dataModel(): FormDataModel<TEntity>;
+        readonly entity: TEntity;
+        render(): React.ReactNode;
+    }
 }

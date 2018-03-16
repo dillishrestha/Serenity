@@ -12,7 +12,7 @@
 
     interface QuickFilter<TWidget extends Widget<TOptions>, TOptions> {
         field?: string;
-        type?: WidgetClass;
+        type?: new (element: JQuery, options: TOptions) => TWidget;
         handler?: (h: QuickFilterArgs<TWidget>) => void;
         title?: string;
         options?: TOptions;

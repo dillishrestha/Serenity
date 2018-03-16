@@ -55,12 +55,17 @@
     <TypeScriptCompile Include="Imports\JQBlockUI.ts" />
     <TypeScriptCompile Include="Q\Q.React.ts" />
     <TypeScriptCompile Include="ReactUI\ButtonPanel.tsx" />
+    <TypeScriptCompile Include="ReactUI\Dialogs\EntityDialog.tsx" />
+    <TypeScriptCompile Include="ReactUI\FormView\FormMode.tsx" />
+    <TypeScriptCompile Include="ReactUI\FormView\FormView.tsx" />
+    <TypeScriptCompile Include="ReactUI\FormView\FormDataSource.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\Categories.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\CategoryLinks.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\CategoryLink.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\CategoryTitle.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\Category.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\CategoryLineBreak.tsx" />
+    <TypeScriptCompile Include="ReactUI\FormView\FormDataModel.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\PropertyGrid.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\PropertyTabs.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\PropertyField.tsx" />
@@ -70,6 +75,7 @@
     <TypeScriptCompile Include="ReactUI\Forms\ValidationMark.tsx" />
     <TypeScriptCompile Include="ReactUI\Forms\Label.tsx" />
     <TypeScriptCompile Include="ReactUI\EditorRefs.tsx" />
+    <TypeScriptCompile Include="ReactUI\Toolbar\CommonButtons.tsx" />
     <TypeScriptCompile Include="Services\ServiceError.ts" />
     <TypeScriptCompile Include="Services\ServiceResponse.ts" />
     <TypeScriptCompile Include="Q\Q.BasicUtils.ts" />
@@ -152,7 +158,7 @@
     <TypeScriptCompile Include="Externals\Serenity.Externals.Slick.ts" />
     <TypeScriptCompile Include="Externals\Serenity.Externals.ts" />
     <None Include="Serenity.CoreLib.d.ts" />
-    <TypeScriptCompile Include="ReactUI\Toolbar.tsx" />
+    <TypeScriptCompile Include="ReactUI\Toolbar\Toolbar.tsx" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Serenity.CoreLib.js" />

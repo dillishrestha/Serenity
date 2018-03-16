@@ -1995,6 +1995,21 @@ var Q;
         });
     }
     Q.prop = prop;
+    function typeByFullName(fullName, global) {
+        if (!fullName)
+            return null;
+        var parts = fullName.split('.');
+        var root = global || window;
+        for (var i = 0; i < parts.length; i++) {
+            root = root[parts[i]];
+            if (root == null)
+                return null;
+        }
+        if (typeof root != "function")
+            return null;
+        return root;
+    }
+    Q.typeByFullName = typeByFullName;
     function enumerateTypes(global, namespaces, callback) {
         function scan(root, fullName, depth) {
             if (!root)
@@ -2456,6 +2471,38 @@ var Q;
                     className: 'widget-wrapper'
                 });
             };
+            Wrapper.prototype.componentWillReceiveProps = function (nextProps) {
+                var props = this.props;
+                var widget = this.widget;
+                if (widget == null || widget.element == null)
+                    return;
+                var $node = widget.element;
+                var node = $node[0];
+                if (nextProps.id !== props.id) {
+                    node.id = nextProps.id;
+                }
+                if (nextProps.name !== props.name && $node.is(':input')) {
+                    node.name = nextProps.name;
+                }
+                if (nextProps.placeholder !== props.placeholder && $node.is(':input')) {
+                    node.placeholder = nextProps.placeholder;
+                }
+                if (nextProps.className !== props.className) {
+                    $node.removeClass(props.className || '').addClass(nextProps.className);
+                }
+                if (nextProps.oneWay !== props.oneWay) {
+                    node.dataset.oneWay = nextProps.oneWay ? "1" : undefined;
+                }
+                if (nextProps.maxLength != props.maxLength)
+                    node.setAttribute("maxLength", nextProps.maxLength || 0);
+                if (nextProps.required !== props.required)
+                    Serenity.EditorUtils.setRequired(this.widget, nextProps.required);
+                if (props.readOnly !== props.readOnly)
+                    Serenity.EditorUtils.setReadOnly(this.widget, nextProps.readOnly);
+                if (nextProps.setOptions != props.setOptions) {
+                    Serenity.ReflectionOptionsSetter.set(this.widget, nextProps.setOptions);
+                }
+            };
             Wrapper.prototype.componentDidMount = function () {
                 if (this.widget != null)
                     return;
@@ -2463,14 +2510,8 @@ var Q;
                 var node = $node[0];
                 this.el.appendChild(node);
                 var props = this.props;
-                if (props.id != null) {
-                    if (typeof props.id === "function") {
-                        if (props.name)
-                            node.id = props.id(props.name);
-                    }
-                    else
-                        node.id = props.id;
-                }
+                if (props.id != null)
+                    node.id = props.id;
                 if ($node.is(':input')) {
                     $node.addClass("editor");
                     if (props.name != null)
@@ -2480,6 +2521,8 @@ var Q;
                 }
                 if (props.className != null)
                     $node.addClass(props.className);
+                if (props.oneWay)
+                    node.dataset.oneWay = "1";
                 this.widget = new widgetType($node, props);
                 if (props.maxLength != null)
                     node.setAttribute("maxLength", props.maxLength.toString());
@@ -3231,6 +3274,7 @@ var Serenity;
                 this.refFunctions = Object.create(null);
                 this.refs = Object.create(null);
                 this.setRef = this.setRef.bind(this);
+                this.ref = this.ref.bind(this);
             }
             EditorRefs.prototype.getRef = function (name) {
                 return this.refs[name];
@@ -3271,21 +3315,30 @@ var Serenity;
                     }
                 }
             };
-            EditorRefs.prototype.saveTo = function (target, names) {
+            EditorRefs.prototype.saveTo = function (target, names, ignoreOneWay) {
                 names = Q.coalesce(names, Object.keys(this.refs));
                 for (var _i = 0, names_2 = names; _i < names_2.length; _i++) {
                     var name = names_2[_i];
                     var editor = this.refs[name];
                     if (editor.isWidgetWrapper) {
-                        editor = editor.widget;
-                        if (editor)
-                            Serenity.EditorUtils.saveValue(editor, { name: name }, target);
+                        if (ignoreOneWay || !editor.props.oneWay) {
+                            editor = editor.widget;
+                            if (editor)
+                                Serenity.EditorUtils.saveValue(editor, { name: name }, target);
+                        }
                     }
                     else if (editor.nodeType) {
-                        target[name] = editor.value;
+                        if (ignoreOneWay ||
+                            !editor.dataset ||
+                            !editor.dataset.oneWay)
+                            target[name] = editor.value;
                     }
                     else if (editor.element) {
-                        Serenity.EditorUtils.saveValue(editor, { name: name }, target);
+                        if (ignoreOneWay ||
+                            !editor.options ||
+                            !editor.options.oneWay) {
+                            Serenity.EditorUtils.saveValue(editor, { name: name }, target);
+                        }
                     }
                 }
             };
@@ -3892,16 +3945,14 @@ var Serenity;
                 return Q.Authorization.hasPermission(item.updatePermission);
             };
             IntraPropertyGrid.prototype.saveTo = function (target, editors) {
-                var _this = this;
-                var items = this.props.items || [];
-                var names = items.filter(function (x) { return x.oneWay !== true && _this.canModifyItem(x); })
-                    .map(function (x) { return x.name; });
-                editors.saveTo(target, names);
+                editors.saveTo(target);
             };
             IntraPropertyGrid.prototype.getItems = function () {
                 var _this = this;
                 return (this.props.items || []).map(function (item) {
-                    var readOnly = item.readOnly === true || !_this.canModifyItem(item);
+                    var canModify = _this.canModifyItem(item);
+                    var oneWay = !!item.oneWay || !canModify;
+                    var readOnly = item.readOnly === true || !canModify;
                     var required = !readOnly && !!item.required && item.editorType !== 'Boolean';
                     var visible = !((item.readPermission != null &&
                         !Q.Authorization.hasPermission(item.readPermission)) ||
@@ -3910,6 +3961,7 @@ var Serenity;
                         (_this.props.mode == 2 /* update */ && item.hideOnUpdate === true));
                     return Q.extend(Q.extend({}, item), {
                         readOnly: readOnly,
+                        oneWay: oneWay,
                         required: required,
                         visible: visible
                     });
@@ -4011,15 +4063,17 @@ var Serenity;
                 var klass = ToolButton_1.adjustIconClass(btn.icon);
                 if (!klass && !btn.title)
                     return React.createElement("span", { className: "button-inner" });
-                if (!btn.htmlEncode) {
-                    var h = (klass ? '<i class="' + Q.attrEncode(klass) + '"></i> ' : '') + btn.title;
+                var title = Q.coalesce(btn.title, '');
+                if (btn.htmlEncode === false) {
+                    var h = (klass ? '<i class="' + Q.attrEncode(klass) + '"></i> ' : '') + title;
                     return (React.createElement("span", { className: "button-inner", dangerouslySetInnerHTML: { __html: h } }));
                 }
                 if (!klass)
-                    return React.createElement("span", { className: "button-inner" }, btn.title);
+                    return React.createElement("span", { className: "button-inner" }, title);
                 return React.createElement("span", { className: "button-inner" },
                     React.createElement("i", { className: klass }),
-                    btn.title);
+                    " ",
+                    title);
             };
             ToolButton.buttonSelector = "div.tool-button";
             ToolButton = ToolButton_1 = __decorate([
@@ -4074,9 +4128,7 @@ var Serenity;
             IntraToolbar.prototype.render = function () {
                 var _this = this;
                 return (React.createElement("div", { className: "tool-buttons", ref: function (el) { return _this.el = el; } },
-                    React.createElement("div", { className: "buttons-outer" },
-                        this.renderButtons(this.props.buttons || []),
-                        this.props.children)));
+                    React.createElement("div", { className: "buttons-outer" }, this.renderButtons(this.props.buttons || []))));
             };
             IntraToolbar.prototype.renderButtons = function (buttons) {
                 var result = [];
@@ -4108,6 +4160,158 @@ var Serenity;
             return Toolbar;
         }(IntraToolbar));
         UI.Toolbar = Toolbar;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var SaveButton = /** @class */ (function (_super) {
+            __extends(SaveButton, _super);
+            function SaveButton() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            SaveButton.prototype.render = function () {
+                var title = Q.text("Controls.EntityDialog." + (this.props.isUpdate ? "UpdateButton" : "SaveButton"));
+                return (React.createElement(UI.ToolButton, __assign({ icon: "fa-save text-light-blue", title: title }, this.props)));
+            };
+            return SaveButton;
+        }(React.Component));
+        UI.SaveButton = SaveButton;
+        var ApplyChangesButton = /** @class */ (function (_super) {
+            __extends(ApplyChangesButton, _super);
+            function ApplyChangesButton() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            ApplyChangesButton.prototype.render = function () {
+                var hint = Q.text("Controls.EntityDialog.ApplyChangesButton");
+                return (React.createElement(UI.ToolButton, __assign({ icon: "fa-save", cssClass: "text-black", hint: hint }, this.props)));
+            };
+            return ApplyChangesButton;
+        }(React.Component));
+        UI.ApplyChangesButton = ApplyChangesButton;
+        var DeleteButton = /** @class */ (function (_super) {
+            __extends(DeleteButton, _super);
+            function DeleteButton() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            DeleteButton.prototype.render = function () {
+                var title = Q.text("Controls.EntityDialog.DeleteButton");
+                return (React.createElement(UI.ToolButton, __assign({ icon: "fa-times text-red", title: title }, this.props)));
+            };
+            return DeleteButton;
+        }(React.Component));
+        UI.DeleteButton = DeleteButton;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var FormMode;
+        (function (FormMode) {
+            FormMode[FormMode["Initial"] = 0] = "Initial";
+            FormMode[FormMode["New"] = 1] = "New";
+            FormMode[FormMode["Edit"] = 2] = "Edit";
+            FormMode[FormMode["View"] = 3] = "View";
+            FormMode[FormMode["Deleted"] = 4] = "Deleted";
+        })(FormMode = UI.FormMode || (UI.FormMode = {}));
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var FormView = /** @class */ (function (_super) {
+            __extends(FormView, _super);
+            function FormView() {
+                var _this = _super !== null && _super.apply(this, arguments) || this;
+                _this.editors = new UI.EditorRefs();
+                return _this;
+            }
+            FormView.prototype.canSave = function () {
+                return this.props.onSave != null;
+            };
+            FormView.prototype.showSave = function () {
+                return this.props.formMode == UI.FormMode.Edit || this.props.formMode == UI.FormMode.New;
+            };
+            FormView.prototype.canClose = function () {
+                return this.props.onClose != null;
+            };
+            FormView.prototype.showApplyChanges = function () {
+                return this.showSave() && this.canClose();
+            };
+            FormView.prototype.isUpdate = function () {
+                return this.props.formMode == UI.FormMode.Edit;
+            };
+            FormView.prototype.canDelete = function () {
+                return this.props.onDelete != null;
+            };
+            FormView.prototype.showDelete = function () {
+                return this.props.formMode == UI.FormMode.Edit;
+            };
+            FormView.prototype.canUndelete = function () {
+                return this.props.onUndelete != null;
+            };
+            FormView.prototype.showUndelete = function () {
+                return this.props.formMode == UI.FormMode.Deleted;
+            };
+            FormView.prototype.loadEntity = function (entity) {
+                this.editors.loadFrom(entity);
+            };
+            FormView.prototype.componentDidMount = function () {
+                this.loadEntity(this.props.entity || Object.create(null));
+            };
+            FormView.prototype.componentWillReceiveProps = function (nextProps) {
+                if (nextProps.entity !== null &&
+                    this.props.entity !== nextProps.entity) {
+                    this.loadEntity(nextProps.entity || Object.create(null));
+                }
+            };
+            FormView.prototype.renderSaveButton = function () {
+                var _this = this;
+                return React.createElement(UI.SaveButton, { isUpdate: this.isUpdate(), disabled: !this.canSave(), onClick: function () { return _this.save(true); } });
+            };
+            FormView.prototype.renderApplyChangesButton = function () {
+                var _this = this;
+                return React.createElement(UI.ApplyChangesButton, { disabled: !this.canSave(), onClick: function () { return _this.save(false); } });
+            };
+            FormView.prototype.renderDeleteButton = function () {
+                return React.createElement(UI.DeleteButton, { disabled: !this.canDelete() });
+            };
+            FormView.prototype.renderToolbar = function (children) {
+                return (React.createElement(UI.Toolbar, null,
+                    this.showSave() && this.renderSaveButton(),
+                    this.showApplyChanges() && this.renderApplyChangesButton(),
+                    this.showDelete() && this.renderDeleteButton(),
+                    children));
+            };
+            FormView.prototype.save = function (close) {
+                var _this = this;
+                if (this.props.onSave == null)
+                    return Promise.reject("No onSave handler!");
+                var newValues = Object.create(null);
+                this.editors.saveTo(newValues);
+                var promise = this.props.onSave(this.props.entity, newValues);
+                if (close && this.props.onClose != null)
+                    promise = promise.then(function (e) { return _this.props.onClose != null && _this.props.onClose(); });
+                return promise;
+            };
+            return FormView;
+        }(React.Component));
+        UI.FormView = FormView;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var EntityDialog = /** @class */ (function () {
+            function EntityDialog() {
+            }
+            return EntityDialog;
+        }());
+        UI.EntityDialog = EntityDialog;
     })(UI = Serenity.UI || (Serenity.UI = {}));
 })(Serenity || (Serenity = {}));
 var Serenity;
@@ -6879,6 +7083,11 @@ var Serenity;
             initialize();
             var editorType = knownTypes[key.toLowerCase()];
             if (editorType == null) {
+                var type = Q.typeByFullName(key);
+                if (type != null) {
+                    knownTypes[key.toLowerCase()] = type;
+                    return type;
+                }
                 throw new ss.Exception(Q.format("Can't find {0} editor type!", key));
             }
             return editorType;
@@ -6930,15 +7139,19 @@ var Serenity;
             var keys = Object.keys(knownTypes);
             for (var _i = 0, keys_3 = keys; _i < keys_3.length; _i++) {
                 var k = keys_3[_i];
-                if (!Q.endsWith(k, suffix))
-                    continue;
-                var p = k.substr(0, k.length - suffix.length);
-                if (Q.isEmptyOrNull(p))
-                    continue;
-                if (knownTypes[p] != null)
-                    continue;
-                knownTypes[p] = knownTypes[k];
+                setWithoutSuffix(k, knownTypes[k]);
             }
+        }
+        function setWithoutSuffix(key, t) {
+            var suffix = 'editor';
+            if (!Q.endsWith(key, suffix))
+                return;
+            var p = key.substr(0, key.length - suffix.length);
+            if (Q.isEmptyOrNull(p))
+                return;
+            if (knownTypes[p] != null)
+                return;
+            knownTypes[p] = knownTypes[key];
         }
     })(EditorTypeRegistry = Serenity.EditorTypeRegistry || (Serenity.EditorTypeRegistry = {}));
     var EditorUtils;
@@ -17245,5 +17458,130 @@ var Serenity;
         }
         DialogTypeRegistry.get = get;
     })(DialogTypeRegistry = Serenity.DialogTypeRegistry || (Serenity.DialogTypeRegistry = {}));
+})(Serenity || (Serenity = {}));
+var Serenity;
+(function (Serenity) {
+    var UI;
+    (function (UI) {
+        var FormDataSource = /** @class */ (function (_super) {
+            __extends(FormDataSource, _super);
+            function FormDataSource(props, context) {
+                var _this = _super.call(this, props, context) || this;
+                _this.emptyEntity = Object.create(null);
+                var entity = _this.props.entity;
+                _this.state = {
+                    formMode: _this.modeFor(entity),
+                    entity: entity
+                };
+                if (_this.props.entityId != null)
+                    _this.loadById(_this.props.entityId);
+                _this.delete = _this.delete.bind(_this);
+                return _this;
+            }
+            FormDataSource.prototype.componentWillReceiveProps = function (nextProps) {
+                if (nextProps.entityId !== this.props.entityId) {
+                    if (nextProps.entityId == null) {
+                        this.loadEntity(nextProps.entity || Object.create(null));
+                    }
+                    else {
+                        this.loadById(nextProps.entityId);
+                    }
+                }
+                else if (nextProps.entity != this.props.entity) {
+                    this.loadEntity(nextProps.entity || Object.create(null));
+                }
+            };
+            FormDataSource.prototype.componentDidMount = function () {
+                this.canSetState = true;
+                if (this.pendingEntity !== undefined) {
+                    this.loadEntity(this.pendingEntity || Object.create(null));
+                }
+            };
+            FormDataSource.prototype.componentWillUnmount = function () {
+                this.canSetState = false;
+            };
+            FormDataSource.prototype.loadEntity = function (entity) {
+                if (this.canSetState) {
+                    this.setState({
+                        formMode: this.modeFor(entity),
+                        entity: entity
+                    });
+                    this.pendingEntity = undefined;
+                }
+                else {
+                    this.pendingEntity = entity || null;
+                }
+            };
+            FormDataSource.prototype.loadResponse = function (response) {
+                this.loadEntity(response.Entity);
+            };
+            FormDataSource.prototype.getLoadByIdRequest = function (entityId) {
+                return {
+                    EntityId: entityId
+                };
+            };
+            FormDataSource.prototype.getLoadByIdOptions = function (entityId) {
+                return {
+                    service: this.props.retrieveUrl ? null : (this.props.service || "ServiceNotSet!") + "/Retrieve",
+                    url: this.props.retrieveUrl,
+                    request: this.getLoadByIdRequest(entityId)
+                };
+            };
+            FormDataSource.prototype.loadById = function (entityId) {
+                var _this = this;
+                var options = this.getLoadByIdOptions(entityId);
+                return Q.serviceCall(options).then(function (response) {
+                    _this.loadResponse(response);
+                    return response;
+                });
+            };
+            FormDataSource.prototype.isDeleted = function (entity) {
+                if (this.props.isDeletedProperty && entity[this.props.isDeletedProperty])
+                    return true;
+                if (this.props.isActiveProperty && entity[this.props.isActiveProperty] === -1)
+                    return true;
+            };
+            FormDataSource.prototype.modeFor = function (entity) {
+                if (entity == null)
+                    return UI.FormMode.Initial;
+                if (this.props.readOnly)
+                    return UI.FormMode.View;
+                if (this.props.idProperty && entity[this.props.idProperty] != null)
+                    return UI.FormMode.Edit;
+                if (this.isDeleted(entity))
+                    return UI.FormMode.Deleted;
+            };
+            FormDataSource.prototype.save = function (entity, newValues) {
+                return null;
+            };
+            FormDataSource.prototype.delete = function (entity) {
+                return null;
+            };
+            FormDataSource.prototype.undelete = function () {
+                return null;
+            };
+            FormDataSource.prototype.dataModel = function () {
+                return {
+                    entity: this.state.entity || this.emptyEntity,
+                    formMode: this.state.formMode,
+                    onSave: (this.state.formMode == UI.FormMode.Edit || this.state.mode == UI.FormMode.New) ? this.save : null,
+                    onDelete: this.state.formMode == UI.FormMode.Edit ? this.delete : null,
+                    onUndelete: this.state.formMode == UI.FormMode.Deleted ? this.undelete : null
+                };
+            };
+            Object.defineProperty(FormDataSource.prototype, "entity", {
+                get: function () {
+                    return this.pendingEntity !== undefined ? this.pendingEntity : this.props.entity;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            FormDataSource.prototype.render = function () {
+                return this.props.view(this.dataModel());
+            };
+            return FormDataSource;
+        }(React.Component));
+        UI.FormDataSource = FormDataSource;
+    })(UI = Serenity.UI || (Serenity.UI = {}));
 })(Serenity || (Serenity = {}));
 //# sourceMappingURL=Serenity.CoreLib.js.map

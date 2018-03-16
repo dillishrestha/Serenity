@@ -70,6 +70,51 @@ namespace Q {
                 });
             };
 
+            Wrapper.prototype.componentWillReceiveProps = function (nextProps: Serenity.WidgetComponentProps<any>) {
+                var props: Serenity.WidgetComponentProps<any> = this.props;
+
+
+                var widget = this.widget;
+                if (widget == null || widget.element == null)
+                    return;
+
+                var $node = widget.element;
+                var node = $node[0];
+
+                if (nextProps.id !== props.id) {
+                    node.id = nextProps.id;
+                }
+
+                if (nextProps.name !== props.name && $node.is(':input')) {
+                    (node as any).name = nextProps.name;
+                }
+
+                if (nextProps.placeholder !== props.placeholder && $node.is(':input')) {
+                    (node as any).placeholder = nextProps.placeholder;
+                }
+
+                if (nextProps.className !== props.className) {
+                    $node.removeClass(props.className || '').addClass(nextProps.className);
+                }
+
+                if (nextProps.oneWay !== props.oneWay) {
+                    node.dataset.oneWay = nextProps.oneWay ? "1" : undefined;
+                }
+
+                if (nextProps.maxLength != props.maxLength)
+                    node.setAttribute("maxLength", nextProps.maxLength || 0);
+
+                if (nextProps.required !== props.required)
+                    Serenity.EditorUtils.setRequired(this.widget, nextProps.required);
+
+                if (props.readOnly !== props.readOnly)
+                    Serenity.EditorUtils.setReadOnly(this.widget, nextProps.readOnly);
+
+                if (nextProps.setOptions != props.setOptions) {
+                    Serenity.ReflectionOptionsSetter.set(this.widget, nextProps.setOptions);
+                }
+            }
+
             Wrapper.prototype.componentDidMount = function () {
 
                 if (this.widget != null)
@@ -79,16 +124,10 @@ namespace Q {
                 var node = $node[0];
                 this.el.appendChild(node);
 
-                var props = this.props;
+                var props: Serenity.WidgetComponentProps<any> = this.props;
 
-                if (props.id != null) {
-                    if (typeof props.id === "function") {
-                        if (props.name)
-                            node.id = (props.id as any)(props.name as string);
-                    }
-                    else
-                        node.id = props.id as string;
-                }
+                if (props.id != null)
+                    node.id = props.id;
 
                 if ($node.is(':input')) {
                     $node.addClass("editor");
@@ -101,6 +140,9 @@ namespace Q {
 
                 if (props.className != null)
                     $node.addClass(props.className);
+
+                if (props.oneWay)
+                    node.dataset.oneWay = "1";
 
                 this.widget = new (widgetType as any)($node, props);
 

@@ -7,6 +7,7 @@
 
         constructor(private inner?: (name: string, ref: any) => void) {
             this.setRef = this.setRef.bind(this);
+            this.ref = this.ref.bind(this);
         }
 
         getRef(name: string) {
@@ -56,22 +57,31 @@
             }
         }
 
-        saveTo(target: any, names?: string[]) {
+        saveTo(target: any, names?: string[], ignoreOneWay?: boolean) {
 
             names = Q.coalesce(names, Object.keys(this.refs));
 
             for (var name of names) {
                 var editor = this.refs[name];
                 if (editor.isWidgetWrapper) {
-                    editor = editor.widget;
-                    if (editor)
-                        Serenity.EditorUtils.saveValue(editor, { name: name }, target);
+                    if (ignoreOneWay || !editor.props.oneWay) {
+                        editor = editor.widget;
+                        if (editor)
+                            Serenity.EditorUtils.saveValue(editor, { name: name }, target);
+                    }
                 }
                 else if (editor.nodeType) {
-                    target[name] = editor.value;
+                    if (ignoreOneWay ||
+                        !(editor as HTMLElement).dataset ||
+                        !(editor as HTMLElement).dataset.oneWay)
+                        target[name] = editor.value;
                 }
                 else if (editor.element) {
-                    Serenity.EditorUtils.saveValue(editor, { name: name }, target);
+                    if (ignoreOneWay ||
+                        !editor.options ||
+                        !editor.options.oneWay) {
+                        Serenity.EditorUtils.saveValue(editor, { name: name }, target);
+                    }
                 }
             }
         }

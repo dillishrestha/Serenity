@@ -58,15 +58,14 @@ namespace Serenity.UI {
         }
 
         saveTo(target: any, editors: EditorRefs): void {
-            var items = this.props.items || [];
-            var names = items.filter(x => x.oneWay !== true && this.canModifyItem(x))
-                .map(x => x.name);
-            editors.saveTo(target, names);
+            editors.saveTo(target);
         }
 
         getItems() {
             return (this.props.items || []).map(item => {
-                var readOnly = item.readOnly === true || !this.canModifyItem(item);
+                var canModify = this.canModifyItem(item);
+                var oneWay = !!item.oneWay || !canModify;
+                var readOnly = item.readOnly === true || !canModify;
                 var required = !readOnly && !!item.required && item.editorType !== 'Boolean';
                 var visible = !((item.readPermission != null &&
                     !Q.Authorization.hasPermission(item.readPermission)) ||
@@ -76,6 +75,7 @@ namespace Serenity.UI {
 
                 return Q.extend(Q.extend({}, item), {
                     readOnly: readOnly,
+                    oneWay: oneWay,
                     required: required,
                     visible: visible
                 });
