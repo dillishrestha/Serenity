@@ -17564,7 +17564,7 @@ var Serenity;
                 return {
                     entity: this.state.entity || this.emptyEntity,
                     formMode: this.state.formMode,
-                    onSave: (this.state.formMode == UI.FormMode.Edit || this.state.mode == UI.FormMode.New) ? this.save : null,
+                    onSave: (this.state.formMode == UI.FormMode.Edit || this.state.formMode == UI.FormMode.New) ? this.save : null,
                     onDelete: this.state.formMode == UI.FormMode.Edit ? this.delete : null,
                     onUndelete: this.state.formMode == UI.FormMode.Deleted ? this.undelete : null
                 };

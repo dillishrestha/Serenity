@@ -141,7 +141,7 @@
             return {
                 entity: this.state.entity || this.emptyEntity,
                 formMode: this.state.formMode,
-                onSave: (this.state.formMode == FormMode.Edit || this.state.mode == FormMode.New) ? this.save : null,
+                onSave: (this.state.formMode == FormMode.Edit || this.state.formMode == FormMode.New) ? this.save : null,
                 onDelete: this.state.formMode == FormMode.Edit ? this.delete : null,
                 onUndelete: this.state.formMode == FormMode.Deleted ? this.undelete : null
             };
